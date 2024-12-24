@@ -1,6 +1,7 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -30,16 +31,19 @@ router.patch(
   "/me/:userId",
   /*authMiddleware,*/ async (req, res, next) => {
     const { userId } = req.params;
-    const { nickname, interest, introduce } = req.body;
+    const { password, nickname, interest, introduce } = req.body;
     const userInfo = await prisma.user.findFirst({
       where: { userId: +userId },
     });
-    console.log(userInfo);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const updateProfile = await prisma.user.update({
       where: {
         userId: +userId,
       },
       data: {
+        password:
+          hashedPassword !== undefined ? hashedPassword : userInfo.password,
         nickname: nickname !== undefined ? nickname : userInfo.nickname,
         interest: interest !== undefined ? interest : userInfo.interest,
         introduce: introduce !== undefined ? introduce : userInfo.introduce,
