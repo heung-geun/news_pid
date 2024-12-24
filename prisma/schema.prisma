@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId      Int        @id @default(autoincrement())
+  name        String
+  age         Int
+  email       String     @unique
+  password    String
+  nickname    String     @unique
+  interest    String?
+  introduce   String?
+
+  post        Post[]     // 유저가 작성한 게시글 관계
+  comment     Comment[]
+  postLike    postLike[] // 게시글의 좋아요 관계
+  @@map("User")
+}
+
+model Post {
+  postsid     Int        @id @default(autoincrement())
+  userId      Int
+  title       String
+  content     String
+  createdAt   DateTime   @default(now())
+  changedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [userId])
+  comment     Comment[]
+  postLike    postLike[]
+  @@map("Post")
+}
+
+model Comment {
+  commentid   Int        @id @default(autoincrement())
+  userId      Int
+  postsid     Int
+  content     String
+  createdAt   DateTime   @default(now())
+  changedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [userId])
+  post        Post       @relation(fields: [postsid], references: [postsid])
+  @@map("Comment")
+}
+
+model postLike {
+  likeid      Int        @id @default(autoincrement())
+  userId      Int
+  postsid     Int
+  createdAt   DateTime   @default(now())
+
+  post        Post       @relation(fields: [postsid], references: [postsid])
+  user        User       @relation(fields: [userId], references: [userId])
+
+  @@unique([userId, postsid]) // 중복 좋아요 금지
+  @@map("postLike")
+}
