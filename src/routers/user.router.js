@@ -27,29 +27,66 @@ router.post("/users", async (req, res, next) => {
   return res.status(201).json({ message: "회원가입이 완료되었습니다." });
 });
 
+router.get(
+  "/me/:userId",
+  /*authMiddleware,*/ async (req, res, next) => {
+    const { userId } = req.params;
+    const userInfo = await prisma.user.findFirst({
+      where: { userId: +userId },
+      select: {
+        name: true,
+        email: true,
+        nickname: true,
+        interest: true,
+        introduce: true,
+        age: true,
+      },
+    });
+    return res.status(200).json({ data: userInfo });
+  },
+);
+
 router.patch(
   "/me/:userId",
   /*authMiddleware,*/ async (req, res, next) => {
     const { userId } = req.params;
-    const { password, nickname, interest, introduce } = req.body;
+    const {
+      password,
+      passwordCheck,
+      email,
+      nickname,
+      interest,
+      introduce,
+      age,
+    } = req.body;
     const userInfo = await prisma.user.findFirst({
       where: { userId: +userId },
     });
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (password && !passwordCheck) {
+      return res.status(404).json({ message: "비밀번호 확인을 입력해주세요" });
+    }
+    if (passwordCheck !== password) {
+      return res
+        .status(401)
+        .json({ message: "변경할 비밀번호가 동일하지 않습니다" });
+    }
 
-    const updateProfile = await prisma.user.update({
-      where: {
-        userId: +userId,
-      },
-      data: {
-        password:
-          hashedPassword !== undefined ? hashedPassword : userInfo.password,
-        nickname: nickname !== undefined ? nickname : userInfo.nickname,
-        interest: interest !== undefined ? interest : userInfo.interest,
-        introduce: introduce !== undefined ? introduce : userInfo.introduce,
-      },
+    const updateData = {
+      email: email !== undefined ? email : userInfo.email,
+      nickname: nickname !== undefined ? nickname : userInfo.nickname,
+      interest: interest !== undefined ? interest : userInfo.interest,
+      introduce: introduce !== undefined ? introduce : userInfo.introduce,
+      age: age !== undefined ? age : userInfo.age,
+    };
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    await prisma.user.update({
+      where: { userId: +userId },
+      data: updateData,
     });
-    console.log(updateProfile);
     return res.status(200).json({ message: "프로필 수정 완료" });
   },
 );
