@@ -17,6 +17,8 @@ router.post("/users", async (req, res, next) => {
   if (isExistUser) {
     return res.status(409).json({ message: "이미 존재하는 이메일입니다." });
   }
+  /*pull request test*/
+  /*pull request test*/
   // 사용자 비밀번호를 암호화합니다.
   const hashedPassword = await bcrypt.hash(password, 10);
   // Users 테이블에 사용자를 추가합니다.
@@ -36,4 +38,5 @@ router.post("/users", async (req, res, next) => {
   return res.status(201).json({ message: "회원가입이 완료되었습니다." });
 });
 
+/*pull request test*/
 export default router;
