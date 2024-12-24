@@ -17,7 +17,7 @@ export default async function (req, res, next) {
     const decodedToken = jwt.verify(token, "custom-secret-key");
     const userId = decodedToken.userId;
 
-    const user = await prisma.users.findFirst({
+    const user = await prisma.user.findFirst({
       where: { userId: +userId },
     });
     if (!user) {
