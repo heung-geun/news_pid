@@ -35,7 +35,6 @@ router.get(
       where: { userId: +userId },
       select: {
         name: true,
-        email: true,
         nickname: true,
         interest: true,
         introduce: true,
@@ -50,15 +49,8 @@ router.patch(
   "/me/:userId",
   /*authMiddleware,*/ async (req, res, next) => {
     const { userId } = req.params;
-    const {
-      password,
-      passwordCheck,
-      email,
-      nickname,
-      interest,
-      introduce,
-      age,
-    } = req.body;
+    const { password, passwordCheck, nickname, interest, introduce, age } =
+      req.body;
     const userInfo = await prisma.user.findFirst({
       where: { userId: +userId },
     });
