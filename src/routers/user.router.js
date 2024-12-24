@@ -18,7 +18,7 @@ router.post("/users", async (req, res) => {
       interest,
       introduce,
     } = req.body;
-
+    //joi 라이브러리 사용하면 좋
     // 이메일 형식을 검증하는 정규식
     const idRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     // ^와 $: 문자열의 시작과 끝을 명시.
@@ -36,7 +36,7 @@ router.post("/users", async (req, res) => {
         .status(400)
         .json({ errorMessage: "아이디는 이메일 형태로 입력해주세요" });
 
-    // 비밀번호 유효성 검증
+    // 비밀번호 유효성 검증 ((이거는 안해도 됌.
     if (!password || !pwRegex.test(password))
       return res.status(400).json({
         errorMessage:
@@ -140,5 +140,5 @@ router.post("/auth", async (req, res) => {
 });
 
 /** 사용자 로그아웃 기능 */
-
+//
 export default router;
