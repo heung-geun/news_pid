@@ -4,6 +4,7 @@ import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import generateRandomNumber from "../utils/randomnumber.js";
 
 const router = express.Router();
 
@@ -195,37 +196,99 @@ router.patch("/me", authMiddleware, async (req, res, next) => {
 });
 
 /*이메일 보내기*/
-router.post("/emailauth", function (req, res, next) {
-  let email = req.body.email;
+router.post("/emailauth", async (req, res, next) => {
+  const { email } = req.body;
+  const number = generateRandomNumber(111111, 999999);
+  const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
+  const authnumber = number;
+  try {
+    let transporter = nodemailer.createTransport({
+      service: "Naver",
+      auth: {
+        user: process.env.NODEMAILER_USER, //  계정 아이디를 입력
+        pass: process.env.NODEMAILER_PASS, //  계정의 비밀번호를 입력
+      },
+    });
 
-  let transporter = nodemailer.createTransport({
-    service: "Naver",
-    auth: {
-      user: process.env.NODEMAILER_USER, //  계정 아이디를 입력
-      pass: process.env.NODEMAILER_PASS, //  계정의 비밀번호를 입력
-    },
-  });
-
-  let mailOptions = {
-    from: process.env.NODEMAILER_USER, // 발송 메일 주소 (위에서 작성한  계정 아이디)
-    to: email, // 수신 메일 주소
-    subject: "안녕하세요, OOOO입니다. 이메일 인증을 해주세요.",
-    html:
-      "<p>아래의 링크를 클릭해주세요 !</p>" +
-      "<a href='http://localhost:3030/users" +
-      email +
-      "&token=abcdefg'>인증하기</a>",
-  };
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("Email sent: " + info.response);
+    let mailOptions = {
+      from: process.env.NODEMAILER_USER, // 발송 메일 주소 (위에서 작성한  계정 아이디)
+      to: email, // 수신 메일 주소
+      subject: "안녕하세요, 뉴스피드입니다. 이메일 인증을 해주세요.",
+      text: "오른쪽 숫자 6자리를 입력해주세요 : " + authnumber,
+    };
+    const authemail = await prisma.emailauth.findFirst({
+      where: { email },
+    });
+    console.log(authemail);
+    if (!authemail) {
+      await prisma.emailauth.create({
+        data: {
+          email: email,
+          authCode: authnumber,
+          authTime: new Date(), // 현재 시간 저장
+          expiresAt: expiresAt,
+        },
+      });
     }
-  });
+    if (authemail) {
+      await prisma.emailauth.update({
+        where: { email },
+        data: {
+          authCode: authnumber,
+          authTime: new Date(),
+          expiresAt: expiresAt,
+        },
+      });
+    }
 
-  res.status(200).json({ message: "이메일 전송 완료" });
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+    req.session.checkemail = email;
+    res.status(200).json({ message: "이메일 전송 완료" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "이메일 전송 실패" });
+  }
+});
+
+/*이메일 인증 확인*/
+router.post("/checkemail", async (req, res) => {
+  const { authCode } = req.body;
+  const email = req.session.checkemail;
+  const authemail = await prisma.emailauth.findFirst({
+    where: { email },
+  });
+  console.log(authemail);
+  try {
+    if (!authemail) {
+      return res
+        .status(400)
+        .json({ message: "인증 코드가 존재하지 않습니다." });
+    }
+
+    const { authCode: storedCode, expiresAt } = authemail;
+    // 인증 코드가 일치하는지 확인하고, 만료 여부 체크
+    if (storedCode === authCode) {
+      if (new Date() < expiresAt) {
+        return res.status(200).json({ message: "인증 성공" });
+      } else {
+        return res.status(400).json({ message: "인증 코드가 만료되었습니다." });
+      }
+    }
+    if (storedCode !== authCode) {
+      return res
+        .status(400)
+        .json({ message: "인증 코드가 일치하지 않습니다." });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "인증 코드 확인 실패" });
+  }
 });
 
 export default router;
