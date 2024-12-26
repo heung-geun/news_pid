@@ -5,8 +5,8 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 // Post 좋아요
-app.post("/posts/:postId/likes", authMiddleware, async (req, res) => {
-  const userId = req.accounts.userId; // 미들웨어에서 가져온 사용자 정보
+router.post("/posts/:postId/likes", authMiddleware, async (req, res) => {
+  const userId = req.user.userId; // 미들웨어에서 가져온 사용자 정보
   const postId = parseInt(req.params.postId); // URL 경로에서 postId 가져옴
 
   // postId 검증
@@ -42,8 +42,8 @@ app.post("/posts/:postId/likes", authMiddleware, async (req, res) => {
 });
 
 // Post 좋아요 취소
-app.delete("/posts/:postId/likes", authMiddleware, async (req, res) => {
-  const userId = req.accounts.userId; // authMiddleware에서 가져온 사용자 정보
+router.delete("/posts/:postId/likes", authMiddleware, async (req, res) => {
+  const userId = req.user.userId; // authMiddleware에서 가져온 사용자 정보
   const postId = parseInt(req.params.postId); // URL 경로에서 postId 가져옴
 
   // postId 검증
@@ -55,10 +55,9 @@ app.delete("/posts/:postId/likes", authMiddleware, async (req, res) => {
     // 좋아요가 존재하는지 확인
     const existingLike = await prisma.postLike.findUnique({
       where: {
-        userId_postid: {
-          // Prisma 스키마의 복합 키 이름
+        userId_postsid: {
           userId: userId,
-          postid: postId,
+          postsid: postId,
         },
       },
     });
@@ -70,23 +69,23 @@ app.delete("/posts/:postId/likes", authMiddleware, async (req, res) => {
     // 좋아요 삭제
     await prisma.postLike.delete({
       where: {
-        userId_postid: {
+        userId_postsid: {
           userId: userId,
-          postid: postId,
+          postsid: postId,
         },
       },
     });
 
     res.status(200).json({ message: "좋아요가 취소 되었습니다." });
   } catch (error) {
-    console.console(error);
+    console.log(error);
     res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
 
 //Comment 좋아요
 router.post("/comments/:commentId/likes", authMiddleware, async (req, res) => {
-  const userId = req.accounts.userId; // authMiddleware에서 가져온 사용자 정보
+  const userId = req.user.userId; // authMiddleware에서 가져온 사용자 정보
   const commentId = parseInt(req.params.commentId); // URL에서 commentId 가져오기
 
   // commentId 검증
@@ -131,7 +130,7 @@ router.delete(
   "/comments/:commentId/likes",
   authMiddleware,
   async (req, res) => {
-    const userId = req.accounts.userId; // authMiddleware에서 가져온 사용자 정보
+    const userId = req.user.userId; // authMiddleware에서 가져온 사용자 정보
     const commentId = parseInt(req.params.commentId); // URL에서 commentId 가져오기
 
     // commentId 검증
@@ -176,3 +175,5 @@ router.delete(
     }
   },
 );
+
+export default router;

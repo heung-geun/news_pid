@@ -6,6 +6,7 @@ const app = express();
 const PORT = 3030;
 
 app.use(express.json());
+
 app.use("/api", [UsersRouter, likeRouter]);
 
 app.listen(PORT, () => {
