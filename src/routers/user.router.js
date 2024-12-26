@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 const router = express.Router();
 
@@ -142,7 +143,7 @@ router.post("/auth", async (req, res) => {
 /** 사용자 로그아웃 기능 */
 
 /*사용자 프로필 조회*/
-router.get("/me/:userId", authMiddleware, async (req, res, next) => {
+router.get("/me", authMiddleware, async (req, res, next) => {
   const { userId } = req.user;
   const userInfo = await prisma.user.findFirst({
     where: { userId: +userId },
@@ -158,7 +159,7 @@ router.get("/me/:userId", authMiddleware, async (req, res, next) => {
 });
 
 /*사용자 프로필 수정*/
-router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
+router.patch("/me", authMiddleware, async (req, res, next) => {
   const { userId } = req.user;
   const { password, passwordCheck, nickname, interest, introduce, age } =
     req.body;
@@ -192,4 +193,39 @@ router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
   });
   return res.status(200).json({ message: "프로필 수정 완료" });
 });
+
+/*이메일 보내기*/
+router.post("/emailauth", function (req, res, next) {
+  let email = req.body.email;
+
+  let transporter = nodemailer.createTransport({
+    service: "Naver",
+    auth: {
+      user: process.env.NODEMAILER_USER, //  계정 아이디를 입력
+      pass: process.env.NODEMAILER_PASS, //  계정의 비밀번호를 입력
+    },
+  });
+
+  let mailOptions = {
+    from: process.env.NODEMAILER_USER, // 발송 메일 주소 (위에서 작성한  계정 아이디)
+    to: email, // 수신 메일 주소
+    subject: "안녕하세요, OOOO입니다. 이메일 인증을 해주세요.",
+    html:
+      "<p>아래의 링크를 클릭해주세요 !</p>" +
+      "<a href='http://localhost:3030/users" +
+      email +
+      "&token=abcdefg'>인증하기</a>",
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Email sent: " + info.response);
+    }
+  });
+
+  res.status(200).json({ message: "이메일 전송 완료" });
+});
+
 export default router;
