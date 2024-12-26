@@ -19,7 +19,7 @@ router.post("/users", async (req, res) => {
       interest,
       introduce,
     } = req.body;
-
+    //joi 라이브러리 사용하면 좋
     // 이메일 형식을 검증하는 정규식
     const idRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     // ^와 $: 문자열의 시작과 끝을 명시.
@@ -37,7 +37,7 @@ router.post("/users", async (req, res) => {
         .status(400)
         .json({ errorMessage: "아이디는 이메일 형태로 입력해주세요" });
 
-    // 비밀번호 유효성 검증
+    // 비밀번호 유효성 검증 ((이거는 안해도 됌.
     if (!password || !pwRegex.test(password))
       return res.status(400).json({
         errorMessage:
@@ -140,56 +140,43 @@ router.post("/auth", async (req, res) => {
   }
 });
 /** 사용자 로그아웃 기능 */
+router.post("/logout", (req, res) => {
+  try {
+    // 요청 헤더에서 Authorization 값 가져오기
+    const { authorization } = req.headers;
 
-/*사용자 프로필 조회*/
-router.get("/me/:userId", authMiddleware, async (req, res, next) => {
-  const { userId } = req.user;
-  const userInfo = await prisma.user.findFirst({
-    where: { userId: +userId },
-    select: {
-      name: true,
-      nickname: true,
-      interest: true,
-      introduce: true,
-      age: true,
-    },
-  });
-  return res.status(200).json({ data: userInfo });
-});
+    if (!authorization) {
+      return res.status(401).json({
+        message: "Authorization 헤더가 필요합니다.",
+      });
+    }
 
-/*사용자 프로필 수정*/
-router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
-  const { userId } = req.user;
-  const { password, passwordCheck, nickname, interest, introduce, age } =
-    req.body;
-  const userInfo = await prisma.user.findFirst({
-    where: { userId: +userId },
-  });
-  if (password && !passwordCheck) {
-    return res.status(404).json({ message: "비밀번호 확인을 입력해주세요" });
+    // 헤더에서 Bearer와 토큰 분리
+    const [tokenType, token] = authorization.split(" ");
+
+    if (!token || tokenType !== "Bearer") {
+      return res.status(401).json({
+        message: "잘못된 토큰 형식입니다.",
+      });
+    }
+
+    // 토큰 검증 (토큰이 유효한지 확인)
+    jwt.verify(token, process.env.SECRET_KEY, (err) => {
+      if (err) {
+        return res.status(401).json({
+          message: "유효하지 않은 토큰입니다.",
+        });
+      }
+    });
+
+    return res.status(200).json({
+      message: "로그아웃 되었습니다.",
+    });
+  } catch (error) {
+    console.error("로그아웃 처리 중 에러:", error.message);
+    return res.status(500).json({
+      message: "서버 에러가 발생했습니다.",
+    });
   }
-  if (passwordCheck !== password) {
-    return res
-      .status(401)
-      .json({ message: "변경할 비밀번호가 동일하지 않습니다" });
-  }
-
-  const updateData = {
-    email: email !== undefined ? email : userInfo.email,
-    nickname: nickname !== undefined ? nickname : userInfo.nickname,
-    interest: interest !== undefined ? interest : userInfo.interest,
-    introduce: introduce !== undefined ? introduce : userInfo.introduce,
-    age: age !== undefined ? age : userInfo.age,
-  };
-
-  if (password) {
-    updateData.password = await bcrypt.hash(password, 10);
-  }
-
-  await prisma.user.update({
-    where: { userId: +userId },
-    data: updateData,
-  });
-  return res.status(200).json({ message: "프로필 수정 완료" });
 });
 export default router;
