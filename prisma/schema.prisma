@@ -26,6 +26,7 @@ model User {
   post        Post[]     // 유저가 작성한 게시글 관계
   comment     Comment[]
   postLike    postLike[] // 게시글의 좋아요 관계
+  commentLike    commentLike[] 
   @@map("User")
 }
 
@@ -53,6 +54,7 @@ model Comment {
 
   user        User       @relation(fields: [userId], references: [userId])
   post        Post       @relation(fields: [postsid], references: [postsid])
+  commentLike commentLike[]
   @@map("Comment")
 }
 
@@ -67,4 +69,16 @@ model postLike {
 
   @@unique([userId, postsid]) // 중복 좋아요 금지
   @@map("postLike")
+}
+
+model commentLike {
+  commentLikeid         Int      @id @default(autoincrement()) 
+  userId     Int     
+  commentid  Int      
+  createdAt  DateTime @default(now())              
+
+  user       User     @relation(fields: [userId], references: [userId])
+  comment    Comment  @relation(fields: [commentid], references: [commentid])
+
+  @@unique([userId, commentid]) // 복합키
 }
