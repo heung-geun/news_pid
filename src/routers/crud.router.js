@@ -32,14 +32,18 @@ router.post("/post-creat", authMiddleware, async (req, res) => {
             return res.status(404).json({ message: "인증 되지 않은 사용자는 게시물 작성이 불가능합니다" })
         }
         const { title, content } = req.body
-        const result = await prisma.post.create({
+        await prisma.post.create({
             data: {
                 title,
                 content,
                 userId
             }
         })
-        return res.status(201).json({ message: "게시물이 작성되었습니다", result })
+        const posts = await prisma.post.findMany({
+            orderBy : { createdAt: "desc"}
+        })
+
+        return res.status(201).json({ message: "게시물이 작성되었습니다", posts })
     } catch (error) {
         return res.status(500).json({ message: "게시물 작성에 에러가 발생했습니다" })
     }
@@ -60,11 +64,16 @@ router.patch("/post-edit", authMiddleware, async (req, res) => {
         }
 
         // 게시물 수정
-        const updatedPost = await prisma.post.update({
+        await prisma.post.update({
             where: { postsid: the_post.postsid },
             data: {title,content}
         })
-        return res.status(200).json({ message: "게시물이 수정되었습니다", updatedPost })
+        const posts = await prisma.post.findMany({
+            orderBy: {createdAt : "desc"}
+        })
+
+
+        return res.status(200).json({ message: "게시물이 수정되었습니다", posts })
     } catch (error) {
         return res.status(500).json({ message: "게시물 수정에 에러가 발생했습니다" })
     }
@@ -88,7 +97,12 @@ router.delete("/post-delete", authMiddleware, async (req, res) => {
         await prisma.post.delete({
             where: { postsid: post.postsid }
         })
-        return res.status(200).json({ message: "게시물이 삭제되었습니다" })
+
+        const posts = await prisma.post.findMany({
+            orderBy : {createdAt: "desc"}
+        })
+
+        return res.status(200).json({ message: "게시물이 삭제되었습니다" , posts })
     } catch (error) {
         return res.status(500).json({ message: "게시물 삭제에 에러가 발생했습니다" })
     }
