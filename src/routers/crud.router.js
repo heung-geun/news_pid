@@ -4,12 +4,12 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-let vaild_game = ["LOL", "로스트아크", "메이플스토리", "발로란트", "기타"];
+const vaild_game = ["전체", "LOL", "로스트아크", "메이플스토리", "발로란트"];
 
 // 게시물 조회
-router.get("/posts", authMiddleware, async (req, res) => {
+router.get("/post-views", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.account; // 인증 미들웨어
+    const { userId } = req.user; // 인증 미들웨어
     if (!userId) {
       return res.status(404).json({
         message: "인증 되지 않은 사용자는 게시물 조회가 불가능합니다",
@@ -37,9 +37,9 @@ router.get("/posts", authMiddleware, async (req, res) => {
 });
 
 // 게시물 작성
-router.post("/posts", authMiddleware, async (req, res) => {
+router.post("/post-creat", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.account; // 인증 미들웨어
+    const { userId } = req.user; // 인증 미들웨어
     if (!userId) {
       return res.status(404).json({
         message: "인증 되지 않은 사용자는 게시물 작성이 불가능합니다",
@@ -74,9 +74,9 @@ router.post("/posts", authMiddleware, async (req, res) => {
 });
 
 // 게시물 수정
-router.patch("/posts", authMiddleware, async (req, res) => {
+router.patch("/post-edit", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.account; // 인증 미들웨어
+    const { userId } = req.user; // 인증 미들웨어
     const { title, content, type } = req.body;
     if (!userId) {
       return res
@@ -117,9 +117,9 @@ router.patch("/posts", authMiddleware, async (req, res) => {
 
 0;
 // 게시물 삭제
-router.delete("/posts", authMiddleware, async (req, res) => {
+router.delete("/post-delete", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.account; // 인증 미들웨어
+    const { userId } = req.user; // 인증 미들웨어
     const { title, type } = req.body;
     if (!userId) {
       return res
