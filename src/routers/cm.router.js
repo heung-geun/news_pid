@@ -1,5 +1,5 @@
 import express from "express";
-import { checkAuth } from "../middleware/authMiddleware";
+import checkAuth from "../middlewares/auth.middleware.js";
 import {
   createComment,
   getComments,
@@ -16,7 +16,7 @@ router.post("/posts/:postId/comments", checkAuth, createComment);
 router.get("/posts/:postId/comments", getComments);
 
 // 댓글 수정
-router.put("/comments/:commentId", checkAuth, updateComment);
+router.patch("/comments/:commentId", checkAuth, updateComment);
 
 // 댓글 삭제
 router.delete("/comments/:commentId", checkAuth, deleteComment);

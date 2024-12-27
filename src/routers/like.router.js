@@ -15,6 +15,23 @@ router.post("/posts/:postId/likes", authMiddleware, async (req, res) => {
   }
 
   try {
+    // 게시글 정보 가져오기
+    const post = await prisma.post.findUnique({
+      where: { postsid: postId },
+    });
+
+    // 게시글 존재 여부 확인
+    if (!post) {
+      return res.status(400).json({ message: "게시글을 찾을 수 없습니다." });
+    }
+
+    // 본인 게시글 좋아요 금지
+    if (post.userId === userId) {
+      return res
+        .status(400)
+        .json({ message: "본인 게시글은 *좋아요* 할 수 없습니다." });
+    }
+
     // 좋아요 중복 확인
     const existingLike = await prisma.postLike.findUnique({
       where: {
@@ -36,7 +53,7 @@ router.post("/posts/:postId/likes", authMiddleware, async (req, res) => {
 
     res.status(200).json({ message: "좋아요가 성공하였습니다." });
   } catch (error) {
-    console.console(error);
+    console.log(error);
     res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
@@ -52,6 +69,15 @@ router.delete("/posts/:postId/likes", authMiddleware, async (req, res) => {
   }
 
   try {
+    // 게시글 정보 가져오기
+    const post = await prisma.post.findUnique({
+      where: { postsid: postId },
+    });
+
+    // 게시글 존재 여부 확인
+    if (!post) {
+      return res.status(400).json({ message: "게시글을 찾을 수 없습니다." });
+    }
     // 좋아요가 존재하는지 확인
     const existingLike = await prisma.postLike.findUnique({
       where: {
@@ -96,6 +122,23 @@ router.post("/comments/:commentId/likes", authMiddleware, async (req, res) => {
   }
 
   try {
+    // 댓글 정보 가져오기
+    const comment = await prisma.comment.findUnique({
+      where: { commentid: commentId },
+    });
+
+    // 댓글 존재 여부 확인
+    if (!comment) {
+      return res.status(400).json({ message: "댓글을 찾을 수 없습니다." });
+    }
+
+    // 본인 댓글 좋아요 금지
+    if (comment.userId === userId) {
+      return res
+        .status(400)
+        .json({ message: "본인 댓글은 *좋아요* 할 수 없습니다." });
+    }
+
     // 중복 좋아요 확인
     const existingLike = await prisma.commentLike.findUnique({
       where: {
@@ -120,7 +163,7 @@ router.post("/comments/:commentId/likes", authMiddleware, async (req, res) => {
 
     return res.status(200).json({ message: "댓글 좋아요를 완료했습니다." });
   } catch (error) {
-    console.console("Error while liking the comment:", error);
+    console.log(error);
     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
@@ -141,6 +184,16 @@ router.delete(
     }
 
     try {
+      // 댓글 정보 가져오기
+      const comment = await prisma.comment.findUnique({
+        where: { commentid: commentId },
+      });
+
+      // 댓글 존재 여부 확인
+      if (!comment) {
+        return res.status(400).json({ message: "댓글을 찾을 수 없습니다." });
+      }
+
       // 좋아요 존재 여부 확인
       const existingLike = await prisma.commentLike.findUnique({
         where: {
