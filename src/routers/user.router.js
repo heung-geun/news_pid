@@ -124,7 +124,7 @@ router.post("/auth", async (req, res) => {
     // 비밀번호가 일치하면 JWT 생성
     const token = jwt.sign(
       {
-        ID: User.userId, // JWT 페이로드에 사용자 키 포함
+        userId: User.userId, // JWT 페이로드에 사용자 키 포함
       },
       process.env.SECRET_KEY, // 비밀 키를 사용하여 서명
       { expiresIn: "1h" }, // 토큰 유효 기간을 1시간으로 설정
@@ -134,7 +134,7 @@ router.post("/auth", async (req, res) => {
     // 로그인 성공 메시지와 사용자 키 반환
     return res.status(200).json({
       message: "로그인 되었습니다",
-      ID: User.userId, // 로그인된 사용자의 고유 키
+      userId: User.userId, // 로그인된 사용자의 고유 키
     });
   } catch (error) {
     console.error(error); // 에러를 콘솔에 출력
@@ -215,7 +215,6 @@ router.patch("/me", authMiddleware, async (req, res, next) => {
   }
 
   const updateData = {
-    email: email !== undefined ? email : userInfo.email,
     nickname: nickname !== undefined ? nickname : userInfo.nickname,
     interest: interest !== undefined ? interest : userInfo.interest,
     introduce: introduce !== undefined ? introduce : userInfo.introduce,
