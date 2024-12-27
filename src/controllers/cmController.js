@@ -8,7 +8,6 @@ export async function createComment(req, res) {
     const userId = req.user.userId; // checkAuth 미들웨어에서 설정된 사용자 ID
 
     // 게시물 존재 여부 확인
-    console.log(postId);
     const post = await prisma.post.findUnique({
       where: { postsid: postId },
     });

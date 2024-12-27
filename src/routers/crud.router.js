@@ -47,7 +47,7 @@ router.post("/posts", authMiddleware, async (req, res) => {
     }
     const { title, content, type } = req.body;
     if (vaild_game.includes(type) === false) {
-      return res.json(404).json({
+      return res.status(404).json({
         message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
         gamelist: vaild_game,
       });
@@ -74,35 +74,40 @@ router.post("/posts", authMiddleware, async (req, res) => {
 });
 
 // 게시물 수정
-router.patch("/posts", authMiddleware, async (req, res) => {
+router.patch("/posts/:postId", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     const { title, content, type } = req.body;
+    const postId = parseInt(req.params.postId);
     if (!userId) {
       return res
         .status(404)
         .json({ message: "인증 되지 않은 사용자는 게시물 수정 불가능합니다" });
     }
-    if (!vaild_game.includes(type)) {
+    if (type && !vaild_game.includes(type)) {
       return res.status(404).json({
         message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
         gamelist: vaild_game,
       });
     }
-    const the_post = await prisma.post.findFirst({ where: { userId, title } });
+
+    const the_post = await prisma.post.findFirst({
+      where: { postsid: postId },
+    });
+
     if (!the_post) {
       return res
         .status(404)
-        .json({ message: `${title} 해당 게시물을 찾을 수 없습니다` });
+        .json({ message: `${postId} 해당 게시물을 찾을 수 없습니다` });
     }
 
     // 게시물 수정
     await prisma.post.update({
       where: { postsid: the_post.postsid },
       data: {
-        title: title !== undefined ? title : title.title,
-        content: content !== undefined ? content : content.content,
-        type: type !== undefined ? type : type.type,
+        title: title !== undefined ? title : the_post.title,
+        content: content !== undefined ? content : the_post.content,
+        type: type !== undefined ? type : the_post.type,
       },
     });
 
@@ -110,7 +115,7 @@ router.patch("/posts", authMiddleware, async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    return res.status(200).json({ message: "게시물이 수정되었습니다", posts });
+    return res.status(200).json({ message: "게시물이 수정되었습니다" });
   } catch (error) {
     return res
       .status(500)
@@ -120,10 +125,11 @@ router.patch("/posts", authMiddleware, async (req, res) => {
 
 0;
 // 게시물 삭제
-router.delete("/posts", authMiddleware, async (req, res) => {
+router.delete("/posts/:postId", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     const { title, type } = req.body;
+    const postId = parseInt(req.params.postId);
     if (!userId) {
       return res
         .status(404)
@@ -131,7 +137,7 @@ router.delete("/posts", authMiddleware, async (req, res) => {
     }
 
     const post = await prisma.post.findFirst({
-      where: { userId, title, type },
+      where: { postsid: postId },
     });
     if (!post) {
       return res
