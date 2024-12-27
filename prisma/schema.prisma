@@ -31,12 +31,13 @@ model User {
 }
 
 model Post {
-  postsid   Int      @id @default(autoincrement())
-  userId    Int
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  changedAt DateTime @updatedAt
+  postsid     Int        @id @default(autoincrement())
+  userId      Int
+  type        String
+  title       String
+  content     String
+  createdAt   DateTime   @default(now())
+  changedAt   DateTime   @updatedAt
 
   user     User       @relation(fields: [userId], references: [userId])
   comment  Comment[]
