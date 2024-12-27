@@ -63,7 +63,7 @@ router.delete("/posts/:postId/likes", authMiddleware, async (req, res) => {
     });
 
     if (!existingLike) {
-      return res.status(404).json({ message: "좋아요가 존재하지 않습니다." });
+      return res.status(400).json({ message: "좋아요가 존재하지 않습니다." });
     }
 
     // 좋아요 삭제
@@ -153,7 +153,7 @@ router.delete(
       });
 
       if (!existingLike) {
-        return res.status(404).json({ message: "좋아요가 존재하지 않습니다." });
+        return res.status(400).json({ message: "좋아요가 존재하지 않습니다." });
       }
 
       // 좋아요 삭제
