@@ -1,8 +1,5 @@
-const Comment = require("../models/cmModel");
-const Post = require("../models/postModel");
-
 // 댓글 작성
-exports.createComment = async (req, res) => {
+export async function createComment(req, res) {
   try {
     const { postId } = req.params;
     const { content } = req.body;
@@ -27,10 +24,10 @@ exports.createComment = async (req, res) => {
       .status(500)
       .json({ message: "댓글 작성 중 오류가 발생했습니다.", error });
   }
-};
+}
 
 // 댓글 조회
-exports.getComments = async (req, res) => {
+export async function getComments(req, res) {
   try {
     const { postId } = req.params;
 
@@ -42,10 +39,10 @@ exports.getComments = async (req, res) => {
       .status(500)
       .json({ message: "댓글 조회 중 오류가 발생했습니다.", error });
   }
-};
+}
 
 // 댓글 수정
-exports.updateComment = async (req, res) => {
+export async function updateComment(req, res) {
   try {
     const { commentId } = req.params;
     const { content } = req.body;
@@ -70,10 +67,10 @@ exports.updateComment = async (req, res) => {
       .status(500)
       .json({ message: "댓글 수정 중 오류가 발생했습니다.", error });
   }
-};
+}
 
 // 댓글 삭제
-exports.deleteComment = async (req, res) => {
+export async function deleteComment(req, res) {
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
@@ -96,4 +93,4 @@ exports.deleteComment = async (req, res) => {
       .status(500)
       .json({ message: "댓글 삭제 중 오류가 발생했습니다.", error });
   }
-};
+}
