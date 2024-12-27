@@ -169,7 +169,6 @@ router.post("/logout", (req, res) => {
       }
     });
 
-
     return res.status(200).json({
       message: "로그아웃 되었습니다.",
     });
@@ -179,7 +178,7 @@ router.post("/logout", (req, res) => {
       message: "서버 에러가 발생했습니다.",
     });
   }
-
+});
 /*사용자 프로필 조회*/
 router.get("/me/:userId", authMiddleware, async (req, res, next) => {
   const { userId } = req.user;
@@ -230,6 +229,5 @@ router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
     data: updateData,
   });
   return res.status(200).json({ message: "프로필 수정 완료" });
-
 });
 export default router;
