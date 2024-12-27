@@ -1,30 +1,26 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-vaild_game = ["LOL", "로스트아크", "메이플스토리", "발로란트", "기타"];
+let vaild_game = ["LOL", "로스트아크", "메이플스토리", "발로란트", "기타"];
 
 // 게시물 조회
-router.get("/post-views", authMiddleware, async (req, res) => {
+router.get("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     if (!userId) {
-      return res
-        .status(404)
-        .json({
-          message: "인증 되지 않은 사용자는 게시물 조회가 불가능합니다",
-        });
+      return res.status(404).json({
+        message: "인증 되지 않은 사용자는 게시물 조회가 불가능합니다",
+      });
     }
     const { type } = req.body;
     if (!vaild_game.includes(type)) {
-      return res
-        .json(404)
-        .json({
-          message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
-          gamelist: vaild_game,
-        });
+      return res.json(404).json({
+        message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
+        gamelist: vaild_game,
+      });
     }
     const result = await prisma.post.findMany({
       where: { userId },
@@ -41,24 +37,20 @@ router.get("/post-views", authMiddleware, async (req, res) => {
 });
 
 // 게시물 작성
-router.post("/post-creat", authMiddleware, async (req, res) => {
+router.post("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     if (!userId) {
-      return res
-        .status(404)
-        .json({
-          message: "인증 되지 않은 사용자는 게시물 작성이 불가능합니다",
-        });
+      return res.status(404).json({
+        message: "인증 되지 않은 사용자는 게시물 작성이 불가능합니다",
+      });
     }
     const { title, content, type } = req.body;
     if (!vaild_game.includes(type)) {
-      return res
-        .json(404)
-        .json({
-          message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
-          gamelist: vaild_game,
-        });
+      return res.json(404).json({
+        message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
+        gamelist: vaild_game,
+      });
     }
 
     await prisma.post.create({
@@ -82,7 +74,7 @@ router.post("/post-creat", authMiddleware, async (req, res) => {
 });
 
 // 게시물 수정
-router.patch("/post-edit", authMiddleware, async (req, res) => {
+router.patch("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     const { title, content, type } = req.body;
@@ -92,12 +84,10 @@ router.patch("/post-edit", authMiddleware, async (req, res) => {
         .json({ message: "인증 되지 않은 사용자는 게시물 수정 불가능합니다" });
     }
     if (!vaild_game.includes(type)) {
-      return res
-        .json(404)
-        .json({
-          message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
-          gamelist: vaild_game,
-        });
+      return res.json(404).json({
+        message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
+        gamelist: vaild_game,
+      });
     }
 
     const the_post = await prisma.post.findFirst({ where: { userId, title } });
@@ -127,7 +117,7 @@ router.patch("/post-edit", authMiddleware, async (req, res) => {
 
 0;
 // 게시물 삭제
-router.delete("/post-delete", authMiddleware, async (req, res) => {
+router.delete("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     const { title, type } = req.body;
