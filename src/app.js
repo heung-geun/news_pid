@@ -4,6 +4,7 @@ import UsersRouter from "./routers/user.router.js";
 import likeRouter from "./routers/like.router.js";
 import postsRouter from "./routers/post.router.js";
 import crudRouter from "./routers/crud.router.js";
+import cmRouter from "./routers/cm.router.js";
 
 const app = express();
 const PORT = 3030;
@@ -18,7 +19,7 @@ app.use(
 );
 app.use(express.json());
 
-app.use("/api", [UsersRouter, likeRouter, postsRouter, crudRouter]);
+app.use("/api", [UsersRouter, likeRouter, postsRouter, crudRouter, cmRouter]);
 
 app.listen(PORT, () => {
   console.log(PORT, "3030포트로 서버가 열렸어요!");
