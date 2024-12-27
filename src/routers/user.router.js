@@ -180,8 +180,8 @@ router.post("/logout", (req, res) => {
   }
 });
 /*사용자 프로필 조회*/
-router.get("/me/:userId", authMiddleware, async (req, res, next) => {
-  const { userId } = req.user;
+router.get("/me", authMiddleware, async (req, res, next) => {
+  const { userId } = req.headers;
   const userInfo = await prisma.user.findFirst({
     where: { userId: +userId },
     select: {
@@ -197,7 +197,7 @@ router.get("/me/:userId", authMiddleware, async (req, res, next) => {
 
 /*사용자 프로필 수정*/
 router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
-  const { userId } = req.user;
+  const { userId } = req.headers;
   const { password, passwordCheck, nickname, interest, introduce, age } =
     req.body;
   const userInfo = await prisma.user.findFirst({
