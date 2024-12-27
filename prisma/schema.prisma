@@ -14,58 +14,71 @@ datasource db {
 }
 
 model User {
-  userId      Int        @id @default(autoincrement())
-  name        String
-  age         Int
-  email       String     @unique
-  password    String
-  nickname    String     @unique
-  interest    String?
-  introduce   String?
+  userId    Int     @id @default(autoincrement())
+  name      String
+  age       Int
+  email     String  @unique
+  password  String
+  nickname  String  @unique
+  interest  String?
+  introduce String?
 
-  post        Post[]     // 유저가 작성한 게시글 관계
-  comment     Comment[]
-  postLike    postLike[] // 게시글의 좋아요 관계
+  post     Post[] // 유저가 작성한 게시글 관계
+  comment  Comment[]
+  postLike postLike[] // 게시글의 좋아요 관계
+
   @@map("User")
 }
 
 model Post {
-  postsid     Int        @id @default(autoincrement())
-  userId      Int
-  type        String
-  title       String
-  content     String
-  createdAt   DateTime   @default(now())
-  changedAt   DateTime   @updatedAt
+  postsid   Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  changedAt DateTime @updatedAt
 
-  user        User       @relation(fields: [userId], references: [userId])
-  comment     Comment[]
-  postLike    postLike[]
+  user     User       @relation(fields: [userId], references: [userId])
+  comment  Comment[]
+  postLike postLike[]
+
+
   @@map("Post")
 }
 
 model Comment {
-  commentid   Int        @id @default(autoincrement())
-  userId      Int
-  postsid     Int
-  content     String
-  createdAt   DateTime   @default(now())
-  changedAt   DateTime   @updatedAt
+  commentid Int      @id @default(autoincrement())
+  userId    Int
+  postsid   Int
+  content   String
+  createdAt DateTime @default(now())
+  changedAt DateTime @updatedAt
 
-  user        User       @relation(fields: [userId], references: [userId])
-  post        Post       @relation(fields: [postsid], references: [postsid])
+  user User @relation(fields: [userId], references: [userId])
+  post Post @relation(fields: [postsid], references: [postsid])
+
   @@map("Comment")
 }
 
 model postLike {
-  likeid      Int        @id @default(autoincrement())
-  userId      Int
-  postsid     Int
-  createdAt   DateTime   @default(now())
+  likeid    Int      @id @default(autoincrement())
+  userId    Int
+  postsid   Int
+  createdAt DateTime @default(now())
 
-  post        Post       @relation(fields: [postsid], references: [postsid])
-  user        User       @relation(fields: [userId], references: [userId])
+  post Post @relation(fields: [postsid], references: [postsid])
+  user User @relation(fields: [userId], references: [userId])
 
   @@unique([userId, postsid]) // 중복 좋아요 금지
   @@map("postLike")
+}
+
+model emailauth {
+  authid    Int       @id @default(autoincrement())
+  email     String    @unique
+  authCode  Int?
+  authTime  DateTime?
+  expiresAt DateTime?
+
+  @@map("emailauth")
 }
