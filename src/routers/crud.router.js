@@ -1,13 +1,13 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
-import authMiddleware from "../middleware/authMiddleware.js"; // 가상 인증 미들웨어
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 vaild_game = ["LOL", "로스트아크", "메이플스토리", "발로란트", "기타"];
 
 // 게시물 조회
-router.get("/posts", authMiddleware, async (req, res) => {
+router.get("/post-views", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     if (!userId) {
@@ -41,7 +41,7 @@ router.get("/posts", authMiddleware, async (req, res) => {
 });
 
 // 게시물 작성
-router.post("/posts", authMiddleware, async (req, res) => {
+router.post("/post-creat", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     if (!userId) {
@@ -82,7 +82,7 @@ router.post("/posts", authMiddleware, async (req, res) => {
 });
 
 // 게시물 수정
-router.patch("/posts", authMiddleware, async (req, res) => {
+router.patch("/post-edit", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     const { title, content, type } = req.body;
@@ -127,7 +127,7 @@ router.patch("/posts", authMiddleware, async (req, res) => {
 
 0;
 // 게시물 삭제
-router.delete("/posts", authMiddleware, async (req, res) => {
+router.delete("/post-delete", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.account; // 인증 미들웨어
     const { title, type } = req.body;
