@@ -85,4 +85,21 @@ router.get("/posts/maplestory", (req, res) => {
   return res.status(200).json({ data: postsBalorant });
 });
 
+router.get("/posts/maplestory", (req, res) => {
+  const postsBalorant = prisma.posts.findMany({
+    where: { type: "발로란트" },
+    select: {
+      userId: true,
+      type: true,
+      title: true,
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return res.status(200).json({ data: postsBalorant });
+});
+
 export default router;
