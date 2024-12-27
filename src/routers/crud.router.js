@@ -99,7 +99,11 @@ router.patch("/posts", authMiddleware, async (req, res) => {
     // 게시물 수정
     await prisma.post.update({
       where: { postsid: the_post.postsid },
-      data: { title, content, type },
+      data: {
+        title: title !== undefined ? title : title.title,
+        content: content !== undefined ? content : content.content,
+        type: type !== undefined ? type : type.type,
+      },
     });
 
     const posts = await prisma.post.findMany({
