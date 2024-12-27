@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express from "express";
 import { checkAuth } from "../middleware/authMiddleware";
 import {
   createComment,
@@ -7,7 +7,7 @@ import {
   deleteComment,
 } from "../controllers/cmController.js";
 
-const router = Router();
+const router = express.Router();
 
 // 댓글 작성
 router.post("/posts/:postId/comments", checkAuth, createComment);
