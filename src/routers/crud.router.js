@@ -74,7 +74,7 @@ router.post("/posts", authMiddleware, async (req, res) => {
 });
 
 // 게시물 수정
-router.patch("/posts", authMiddleware, async (req, res) => {
+router.patch("/posts/:postsid", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     const { title, content, type } = req.body;
