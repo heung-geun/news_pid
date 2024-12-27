@@ -4,10 +4,10 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-const vaild_game = ["전체", "LOL", "로스트아크", "메이플스토리", "발로란트"];
+const vaild_game = ["LOL", "로스트아크", "메이플스토리", "발로란트", "기타"];
 
 // 게시물 조회
-router.get("/post-views", authMiddleware, async (req, res) => {
+router.get("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     if (!userId) {
@@ -37,7 +37,7 @@ router.get("/post-views", authMiddleware, async (req, res) => {
 });
 
 // 게시물 작성
-router.post("/post-creat", authMiddleware, async (req, res) => {
+router.post("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     if (!userId) {
@@ -74,7 +74,7 @@ router.post("/post-creat", authMiddleware, async (req, res) => {
 });
 
 // 게시물 수정
-router.patch("/post-edit", authMiddleware, async (req, res) => {
+router.patch("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     const { title, content, type } = req.body;
@@ -116,7 +116,7 @@ router.patch("/post-edit", authMiddleware, async (req, res) => {
 
 0;
 // 게시물 삭제
-router.delete("/post-delete", authMiddleware, async (req, res) => {
+router.delete("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
     const { title, type } = req.body;
