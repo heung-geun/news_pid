@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `User` ADD COLUMN `authCode` VARCHAR(191) NULL,
+    ADD COLUMN `authTime` DATETIME(3) NULL;
