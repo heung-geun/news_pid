@@ -53,7 +53,7 @@ router.get("/posts/lost_ark", (req, res) => {
 
 router.get("/posts/maplestory", (req, res) => {
   const postsMaplestory = prisma.posts.findMany({
-    where: { type: "매이플스토리" },
+    where: { type: "메이플스토리" },
     select: {
       userId: true,
       type: true,
@@ -85,9 +85,9 @@ router.get("/posts/maplestory", (req, res) => {
   return res.status(200).json({ data: postsBalorant });
 });
 
-router.get("/posts/maplestory", (req, res) => {
-  const postsBalorant = prisma.posts.findMany({
-    where: { type: "발로란트" },
+router.get("/posts/etc", (req, res) => {
+  const postsEtc = prisma.posts.findMany({
+    where: { type: "기타" },
     select: {
       userId: true,
       type: true,
@@ -99,7 +99,7 @@ router.get("/posts/maplestory", (req, res) => {
     },
   });
 
-  return res.status(200).json({ data: postsBalorant });
+  return res.status(200).json({ data: postsEtc });
 });
 
 export default router;
