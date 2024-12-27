@@ -20,8 +20,8 @@ const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
     //JWT 토큰에서 가져온 사용자 정보를 이용해서 데이터베이스에서 해당 사용자가 실제로 존재하는지 확인하는 작업
-    const loginUser = await prisma.users.findUnique({
-      where: { userKey: decoded.userKey },
+    const loginUser = await prisma.user.findUnique({
+      where: { userId: decoded.userId },
     });
     // 사용자 정보가 데이터베이스에 없는 경우
 

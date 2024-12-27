@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import generateRandomNumber from "../utils/randomnumber.js";
 
 const router = express.Router();
 
@@ -19,7 +21,7 @@ router.post("/users", async (req, res) => {
       interest,
       introduce,
     } = req.body;
-
+    //joi 라이브러리 사용하면 좋
     // 이메일 형식을 검증하는 정규식
     const idRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     // ^와 $: 문자열의 시작과 끝을 명시.
@@ -37,7 +39,7 @@ router.post("/users", async (req, res) => {
         .status(400)
         .json({ errorMessage: "아이디는 이메일 형태로 입력해주세요" });
 
-    // 비밀번호 유효성 검증
+    // 비밀번호 유효성 검증 ((이거는 안해도 됌.
     if (!password || !pwRegex.test(password))
       return res.status(400).json({
         errorMessage:
@@ -140,9 +142,47 @@ router.post("/auth", async (req, res) => {
   }
 });
 /** 사용자 로그아웃 기능 */
+router.post("/logout", (req, res) => {
+  try {
+    // 요청 헤더에서 Authorization 값 가져오기
+    const { authorization } = req.headers;
 
+    if (!authorization) {
+      return res.status(401).json({
+        message: "Authorization 헤더가 필요합니다.",
+      });
+    }
+
+    // 헤더에서 Bearer와 토큰 분리
+    const [tokenType, token] = authorization.split(" ");
+
+    if (!token || tokenType !== "Bearer") {
+      return res.status(401).json({
+        message: "잘못된 토큰 형식입니다.",
+      });
+    }
+
+    // 토큰 검증 (토큰이 유효한지 확인)
+    jwt.verify(token, process.env.SECRET_KEY, (err) => {
+      if (err) {
+        return res.status(401).json({
+          message: "유효하지 않은 토큰입니다.",
+        });
+      }
+    });
+
+    return res.status(200).json({
+      message: "로그아웃 되었습니다.",
+    });
+  } catch (error) {
+    console.error("로그아웃 처리 중 에러:", error.message);
+    return res.status(500).json({
+      message: "서버 에러가 발생했습니다.",
+    });
+  }
+});
 /*사용자 프로필 조회*/
-router.get("/me/:userId", authMiddleware, async (req, res, next) => {
+router.get("/me", authMiddleware, async (req, res, next) => {
   const { userId } = req.user;
   const userInfo = await prisma.user.findFirst({
     where: { userId: +userId },
@@ -158,7 +198,7 @@ router.get("/me/:userId", authMiddleware, async (req, res, next) => {
 });
 
 /*사용자 프로필 수정*/
-router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
+router.patch("/me", authMiddleware, async (req, res, next) => {
   const { userId } = req.user;
   const { password, passwordCheck, nickname, interest, introduce, age } =
     req.body;
@@ -192,4 +232,101 @@ router.patch("/me/:userId", authMiddleware, async (req, res, next) => {
   });
   return res.status(200).json({ message: "프로필 수정 완료" });
 });
+
+/*이메일 보내기*/
+router.post("/emailauth", async (req, res, next) => {
+  const { email } = req.body;
+  const number = generateRandomNumber(111111, 999999);
+  const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
+  const authnumber = number;
+  try {
+    let transporter = nodemailer.createTransport({
+      service: "Naver",
+      auth: {
+        user: process.env.NODEMAILER_USER, //  계정 아이디를 입력
+        pass: process.env.NODEMAILER_PASS, //  계정의 비밀번호를 입력
+      },
+    });
+
+    let mailOptions = {
+      from: process.env.NODEMAILER_USER, // 발송 메일 주소 (위에서 작성한  계정 아이디)
+      to: email, // 수신 메일 주소
+      subject: "안녕하세요, 뉴스피드입니다. 이메일 인증을 해주세요.",
+      text: "오른쪽 숫자 6자리를 입력해주세요 : " + authnumber,
+    };
+    const authemail = await prisma.emailauth.findFirst({
+      where: { email },
+    });
+    console.log(authemail);
+    if (!authemail) {
+      await prisma.emailauth.create({
+        data: {
+          email: email,
+          authCode: authnumber,
+          authTime: new Date(), // 현재 시간 저장
+          expiresAt: expiresAt,
+        },
+      });
+    }
+    if (authemail) {
+      await prisma.emailauth.update({
+        where: { email },
+        data: {
+          authCode: authnumber,
+          authTime: new Date(),
+          expiresAt: expiresAt,
+        },
+      });
+    }
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+    req.session.checkemail = email;
+    res.status(200).json({ message: "이메일 전송 완료" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "이메일 전송 실패" });
+  }
+});
+
+/*이메일 인증 확인*/
+router.post("/checkemail", async (req, res) => {
+  const { authCode } = req.body;
+  const email = req.session.checkemail;
+  const authemail = await prisma.emailauth.findFirst({
+    where: { email },
+  });
+  console.log(authemail);
+  try {
+    if (!authemail) {
+      return res
+        .status(400)
+        .json({ message: "인증 코드가 존재하지 않습니다." });
+    }
+
+    const { authCode: storedCode, expiresAt } = authemail;
+    // 인증 코드가 일치하는지 확인하고, 만료 여부 체크
+    if (storedCode === authCode) {
+      if (new Date() < expiresAt) {
+        return res.status(200).json({ message: "인증 성공" });
+      } else {
+        return res.status(400).json({ message: "인증 코드가 만료되었습니다." });
+      }
+    }
+    if (storedCode !== authCode) {
+      return res
+        .status(400)
+        .json({ message: "인증 코드가 일치하지 않습니다." });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "인증 코드 확인 실패" });
+  }
+});
+
 export default router;
