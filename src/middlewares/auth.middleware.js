@@ -8,6 +8,7 @@ dotenv.config();
 // 인증 미들웨어
 const authMiddleware = async (req, res, next) => {
   try {
+    // 요청 Authorization 값 확인
     const { authorization } = req.headers;
 
     // Authorization 헤더 확인
@@ -17,14 +18,12 @@ const authMiddleware = async (req, res, next) => {
 
     const [tokenType, token] = authorization.split(" ");
 
-    // 토큰 형식 검증
-    if (!token || tokenType !== "Bearer") {
-      return res
-        .status(401)
-        .json({ errorMessage: "올바르지 않은 인증 형식입니다." });
-    }
+    // token이 비어있거나(없는 경우) tokenType이 Bearer가 아닌경우
 
-    // JWT 검증
+    if (!token || tokenType !== "Bearer")
+      return res.status(401).json({ errorMessage: "로그인부터 해주세요" });
+    // 토큰 검증
+
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
     // userId 검증
@@ -47,9 +46,11 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // 사용자 정보를 req 객체에 추가
+
     req.user = loginUser;
 
     // 다음 미들웨어로 이동
+
     next();
   } catch (error) {
     console.error("JWT 검증 실패:", error.message);
