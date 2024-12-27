@@ -33,6 +33,7 @@ model User {
 model Post {
   postsid   Int      @id @default(autoincrement())
   userId    Int
+  type      String
   title     String
   content   String
   createdAt DateTime @default(now())
