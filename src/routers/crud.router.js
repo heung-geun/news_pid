@@ -6,7 +6,7 @@ const router = express.Router();
 
 const vaild_game = ["LOL", "로스트아크", "메이플스토리", "발로란트", "기타"];
 
-// 게시물 조회
+//내 게시물 조회
 router.get("/posts", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.user; // 인증 미들웨어
@@ -15,19 +15,19 @@ router.get("/posts", authMiddleware, async (req, res) => {
         message: "인증 되지 않은 사용자는 게시물 조회가 불가능합니다",
       });
     }
-    const { type } = req.body;
-    if (!vaild_game.includes(type)) {
-      return res.json(404).json({
-        message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
-        gamelist: vaild_game,
-      });
-    }
+    // const { type } = req.body;
+    // if (!vaild_game.includes(type)) {
+    //   return res.status(404).json({
+    //     message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
+    //     gamelist: vaild_game,
+    //   });
+    // }
     const result = await prisma.post.findMany({
       where: { userId },
       select: {
         title: true,
         content: true,
-        type,
+        type: true,
       },
     });
     res.status(200).json({ result });
@@ -46,7 +46,7 @@ router.post("/posts", authMiddleware, async (req, res) => {
       });
     }
     const { title, content, type } = req.body;
-    if (!vaild_game.includes(type)) {
+    if (vaild_game.includes(type) === false) {
       return res.json(404).json({
         message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
         gamelist: vaild_game,
@@ -84,12 +84,11 @@ router.patch("/posts", authMiddleware, async (req, res) => {
         .json({ message: "인증 되지 않은 사용자는 게시물 수정 불가능합니다" });
     }
     if (!vaild_game.includes(type)) {
-      return res.json(404).json({
+      return res.status(404).json({
         message: "게임 타입이 잘못되었습니다 유효한 값을 입력해 주세요",
         gamelist: vaild_game,
       });
     }
-
     const the_post = await prisma.post.findFirst({ where: { userId, title } });
     if (!the_post) {
       return res
@@ -100,7 +99,11 @@ router.patch("/posts", authMiddleware, async (req, res) => {
     // 게시물 수정
     await prisma.post.update({
       where: { postsid: the_post.postsid },
-      data: { title, content, type },
+      data: {
+        title: title !== undefined ? title : title.title,
+        content: content !== undefined ? content : content.content,
+        type: type !== undefined ? type : type.type,
+      },
     });
 
     const posts = await prisma.post.findMany({
