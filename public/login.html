@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>로그인</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-form">
+        <h2>로그인</h2>
+        <div class="form-group">
+            <label for="email">이메일:</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">비밀번호:</label>
+            <input type="password" id="password" required>
+        </div>
+        <button onclick="login()">로그인</button>
+        <button onclick="location.href='signup.html'" style="background-color: #2196F3; margin-top: 10px;">회원가입</button>
+        <button onclick="location.href='index.html'" style="background-color: #666; margin-top: 10px;">취소</button>
+    </div>
+
+    <script>
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:3030/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 토큰 저장
+                    localStorage.setItem('userToken', data.token);
+                    alert('로그인되었습니다!');
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.errorMessage || '로그인에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('로그인 처리 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

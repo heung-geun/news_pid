@@ -326,4 +326,50 @@ router.post("/checkemail", async (req, res) => {
   }
 });
 
+// 소셜 로그인 처리 라우터 추가
+router.post("/social/auth", async (req, res) => {
+  try {
+    const { email, nickname, name, provider } = req.body;
+
+    // 이미 가입된 사용자인지 확인
+    let user = await prisma.User.findFirst({ where: { email } });
+
+    if (!user) {
+      // 새로운 사용자 생성
+      user = await prisma.User.create({
+        data: {
+          email,
+          nickname,
+          name,
+          provider, // 'naver'
+          // 소셜 로그인의 경우 비밀번호 없이 생성
+          password: '', // 또는 랜덤한 문자열
+          age: 0, // 기본값
+          interest: '', // 기본값
+          introduce: '', // 기본값
+        },
+      });
+    }
+
+    // JWT 토큰 생성
+    const token = jwt.sign(
+      { userId: user.userId },
+      process.env.SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
+    // 응답 헤더에 토큰 설정
+    res.setHeader("authorization", `Bearer ${token}`);
+
+    return res.status(200).json({
+      message: "로그인 되었습니다",
+      userId: user.userId,
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ errorMessage: "서버 에러" });
+  }
+});
+
 export default router;
