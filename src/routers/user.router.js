@@ -8,6 +8,11 @@ import generateRandomNumber from "../utils/randomnumber.js";
 
 const router = express.Router();
 
+// GET /api/users 요청 처리
+router.get("/users", (req, res) => {
+  res.status(200).json({ message: "GET 요청 성공!" });
+});
+
 /** 사용자 회원가입 API **/
 router.post("/users", async (req, res) => {
   try {
@@ -58,6 +63,12 @@ router.post("/users", async (req, res) => {
         .status(401)
         .json({ errorMessage: "비밀번호가 일치하지 않습니다" });
 
+    // age를 정수로 변환
+    const parsedAge = parseInt(age, 10);
+    if (isNaN(parsedAge)) {
+      return res.status(400).json({ message: "유효한 나이를 입력하세요." });
+    }
+
     // 닉네임 중복 확인
     const isExistUser = await prisma.User.findFirst({
       where: {
@@ -81,7 +92,7 @@ router.post("/users", async (req, res) => {
         password: hashedPassword, // 암호화된 비밀번호
         nickname, // 닉네임
         name, // 이름
-        age, // 나이
+        age: parsedAge, // 정수로 변환된 값 사용
         interest, // 흥미가 있는 게임이름
         introduce, // 자신이 하고 싶은 한마디
       },
@@ -135,6 +146,7 @@ router.post("/auth", async (req, res) => {
     return res.status(200).json({
       message: "로그인 되었습니다",
       userId: User.userId, // 로그인된 사용자의 고유 키
+      token,
     });
   } catch (error) {
     console.error(error); // 에러를 콘솔에 출력
@@ -143,44 +155,30 @@ router.post("/auth", async (req, res) => {
 });
 /** 사용자 로그아웃 기능 */
 router.post("/logout", (req, res) => {
+  const { authorization } = req.headers;
+
+  if (!authorization) {
+    return res
+      .status(401)
+      .json({ message: "Authorization 헤더가 필요합니다." });
+  }
+
+  const [tokenType, token] = authorization.split(" ");
+  if (!token || tokenType !== "Bearer") {
+    return res.status(401).json({ message: "잘못된 토큰 형식입니다." });
+  }
+
   try {
-    // 요청 헤더에서 Authorization 값 가져오기
-    const { authorization } = req.headers;
-
-    if (!authorization) {
-      return res.status(401).json({
-        message: "Authorization 헤더가 필요합니다.",
-      });
-    }
-
-    // 헤더에서 Bearer와 토큰 분리
-    const [tokenType, token] = authorization.split(" ");
-
-    if (!token || tokenType !== "Bearer") {
-      return res.status(401).json({
-        message: "잘못된 토큰 형식입니다.",
-      });
-    }
-
-    // 토큰 검증 (토큰이 유효한지 확인)
-    jwt.verify(token, process.env.SECRET_KEY, (err) => {
-      if (err) {
-        return res.status(401).json({
-          message: "유효하지 않은 토큰입니다.",
-        });
-      }
-    });
-
-    return res.status(200).json({
-      message: "로그아웃 되었습니다.",
-    });
+    jwt.verify(token, process.env.SECRET_KEY);
+    return res.status(200).json({ message: "로그아웃 되었습니다." });
   } catch (error) {
-    console.error("로그아웃 처리 중 에러:", error.message);
-    return res.status(500).json({
-      message: "서버 에러가 발생했습니다.",
-    });
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "토큰이 만료되었습니다." });
+    }
+    return res.status(401).json({ message: "유효하지 않은 토큰입니다." });
   }
 });
+
 /*사용자 프로필 조회*/
 router.get("/me", authMiddleware, async (req, res, next) => {
   const { userId } = req.user;
