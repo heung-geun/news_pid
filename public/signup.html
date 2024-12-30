@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>회원가입</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .signup-form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-form">
+        <h2>회원가입</h2>
+        <div class="form-group">
+            <label for="email">이메일:</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">비밀번호:</label>
+            <input type="password" id="password" required>
+        </div>
+        <div class="form-group">
+            <label for="passwordCheck">비밀번호 확인:</label>
+            <input type="password" id="passwordCheck" required>
+        </div>
+        <div class="form-group">
+            <label for="nickname">닉네임:</label>
+            <input type="text" id="nickname" required>
+        </div>
+        <div class="form-group">
+            <label for="name">이름:</label>
+            <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+            <label for="age">나이:</label>
+            <input type="number" id="age" required>
+        </div>
+        <div class="form-group">
+            <label for="interest">관심사:</label>
+            <input type="text" id="interest">
+        </div>
+        <div class="form-group">
+            <label for="introduce">자기소개:</label>
+            <textarea id="introduce" rows="3" style="width: 100%"></textarea>
+        </div>
+        <button onclick="signup()">가입하기</button>
+        <button onclick="location.href='index.html'" style="background-color: #666; margin-top: 10px;">취소</button>
+    </div>
+
+    <script>
+        async function signup() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordCheck = document.getElementById('passwordCheck').value;
+            const nickname = document.getElementById('nickname').value;
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const interest = document.getElementById('interest').value;
+            const introduce = document.getElementById('introduce').value;
+
+            try {
+                const response = await fetch('http://localhost:3030/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        passwordCheck,
+                        nickname,
+                        name,
+                        age,
+                        interest,
+                        introduce
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('회원가입이 완료되었습니다!');
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.errorMessage || '회원가입에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('회원가입 처리 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

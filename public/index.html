@@ -1,244 +1,70 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>회원가입 및 로그인</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-      }
-      .form-container {
-        display: none;
-      }
-      .form-container.active {
-        display: block;
-      }
-      label {
-        display: block;
-        margin-bottom: 5px;
-      }
-      input {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-      button {
-        width: 100%;
-        padding: 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      button:hover {
-        background-color: #0056b3;
-      }
-      .logout-button {
-        margin-top: 20px;
-        background-color: #dc3545;
-      }
-      .logout-button:hover {
-        background-color: #a71d2a;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>회원가입 및 로그인</h1>
-    <div>
-      <button onclick="showForm('signup')">회원가입</button>
-      <button onclick="showForm('login')">로그인</button>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>메인 페이지</title>
+</head>
+<body>
+    <div id="userInfo"></div>
+    <button id="logoutBtn" style="display: none;" onclick="location.href='logout.html'">로그아웃</button>
+    <div id="loginOptions" style="display: none;">
+        <!-- 기존 로그인 버튼 -->
+        <button onclick="location.href='login.html'">일반 로그인</button>
+        <!-- 네이버 로그인 버튼 -->
+        <button onclick="location.href='social_login.html'">네이버 로그인</button>
+        <!-- 회원가입 버튼 -->
+        <button onclick="location.href='signup.html'">회원가입</button>
     </div>
-
-    <!-- 회원가입 폼 -->
-    <div id="signup" class="form-container">
-      <h2>회원가입</h2>
-      <form id="signup-form">
-        <label for="signup-email">이메일:</label>
-        <input
-          type="email"
-          id="signup-email"
-          name="email"
-          placeholder="이메일을 입력하세요"
-          required
-        />
-
-        <label for="signup-password">비밀번호:</label>
-        <input
-          type="password"
-          id="signup-password"
-          name="password"
-          placeholder="비밀번호를 입력하세요"
-          required
-        />
-
-        <label for="signup-password-check">비밀번호 확인:</label>
-        <input
-          type="password"
-          id="signup-password-check"
-          name="passwordCheck"
-          placeholder="비밀번호를 다시 입력하세요"
-          required
-        />
-
-        <label for="signup-nickname">닉네임:</label>
-        <input
-          type="text"
-          id="signup-nickname"
-          name="nickname"
-          placeholder="닉네임을 입력하세요"
-          required
-        />
-
-        <label for="signup-name">이름:</label>
-        <input
-          type="text"
-          id="signup-name"
-          name="name"
-          placeholder="이름을 입력하세요"
-          required
-        />
-
-        <label for="signup-age">나이:</label>
-        <input
-          type="number"
-          id="signup-age"
-          name="age"
-          placeholder="나이를 입력하세요"
-          required
-        />
-
-        <label for="signup-interest">관심사:</label>
-        <input
-          type="text"
-          id="signup-interest"
-          name="interest"
-          placeholder="관심사를 입력하세요"
-          required
-        />
-
-        <label for="signup-introduce">소개:</label>
-        <input
-          type="text"
-          id="signup-introduce"
-          name="introduce"
-          placeholder="간단한 소개를 입력하세요"
-        />
-
-        <button type="submit">회원가입</button>
-      </form>
-    </div>
-
-    <!-- 로그인 폼 -->
-    <div id="login" class="form-container">
-      <h2>로그인</h2>
-      <form id="login-form">
-        <label for="login-email">이메일:</label>
-        <input
-          type="email"
-          id="login-email"
-          name="email"
-          placeholder="이메일을 입력하세요"
-          required
-        />
-
-        <label for="login-password">비밀번호:</label>
-        <input
-          type="password"
-          id="login-password"
-          name="password"
-          placeholder="비밀번호를 입력하세요"
-          required
-        />
-
-        <button type="submit">로그인</button>
-      </form>
-    </div>
-
-    <!-- 로그아웃 페이지로 이동 버튼 -->
-    <button id="logout-page-button" class="logout-button" style="display: none">
-      로그아웃 페이지로 이동
-    </button>
 
     <script>
-      function showForm(formId) {
-        document
-          .querySelectorAll(".form-container")
-          .forEach((form) => form.classList.remove("active"));
-        document.getElementById(formId).classList.add("active");
-      }
+        window.onload = async function() {
+            // userToken으로 통합 (네이버 토큰이나 일반 로그인 토큰)
+            const token = localStorage.getItem('userToken');
+            const userInfoDiv = document.getElementById('userInfo');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginOptions = document.getElementById('loginOptions');
 
-      document
-        .getElementById("signup-form")
-        .addEventListener("submit", async (event) => {
-          event.preventDefault();
+            if (token) {
+                try {
+                    // 토큰을 사용하여 사용자 정보 가져오기
+                    const response = await fetch('http://localhost:3030/api/me', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-          const formData = new FormData(event.target);
-          const data = Object.fromEntries(formData);
-
-          try {
-            const response = await fetch("http://localhost:3030/api/users", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-              alert("회원가입 성공: " + result.message);
+                    if (response.ok) {
+                        const userData = await response.json();
+                        userInfoDiv.innerHTML = `환영합니다, ${userData.data.nickname}님!`;
+                        logoutBtn.style.display = 'block';
+                        loginOptions.style.display = 'none';
+                    } else {
+                        // 토큰이 유효하지 않은 경우
+                        localStorage.removeItem('userToken');
+                        showLoginOptions();
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showLoginOptions();
+                }
             } else {
-              alert("회원가입 실패: " + result.errorMessage);
+                showLoginOptions();
             }
-          } catch (error) {
-            console.error("회원가입 에러:", error);
-            alert("회원가입 중 문제가 발생했습니다.");
-          }
-        });
+        }
 
-      document
-        .getElementById("login-form")
-        .addEventListener("submit", async (event) => {
-          event.preventDefault();
+        function showLoginOptions() {
+            const userInfoDiv = document.getElementById('userInfo');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginOptions = document.getElementById('loginOptions');
 
-          const formData = new FormData(event.target);
-          const data = Object.fromEntries(formData);
+            userInfoDiv.innerHTML = '로그인이 필요합니다.';
+            logoutBtn.style.display = 'none';
+            loginOptions.style.display = 'block';
+        }
 
-          try {
-            const response = await fetch("http://localhost:3030/api/auth", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-              alert("로그인 성공!");
-              console.log("서버로부터 받은 토큰:", result.token); // 토큰 확인
-              localStorage.setItem("token", result.token);
-              document.getElementById("logout-page-button").style.display =
-                "block"; // 로그아웃 버튼 표시
-            } else {
-              alert("로그인 실패: " + result.errorMessage);
-            }
-          } catch (error) {
-            console.error("로그인 에러:", error);
-            alert("로그인 중 문제가 발생했습니다.");
-          }
-        });
-
-      document
-        .getElementById("logout-page-button")
-        .addEventListener("click", () => {
-          window.location.href = "/logout.html"; // 로그아웃 페이지로 이동
-        });
+        function naverLogin() {
+            window.open('social_login_callback.html', 'naverLogin', 
+                'width=500,height=600,scrollbars=yes');
+        }
     </script>
-  </body>
+</body>
 </html>
