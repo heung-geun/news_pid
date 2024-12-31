@@ -30,6 +30,7 @@ app.use(
   })
 );
 
+
 app.use(
   session({
     secret: process.env.SESSEION_KEY,
@@ -49,6 +50,8 @@ app.use("/api", [
   cmRouter,
   s3Router,
 ]);
+
+app.use('/api/s3', s3Router);
 
 app.listen(PORT, () => {
   console.log(PORT, "3030포트로 서버가 열렸어요!");
