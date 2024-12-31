@@ -323,24 +323,59 @@ router.post("/posts", authMiddleware, upload.array('media', 5), async (req, res)
 });
 
 // 게시글 삭제
-router.delete("/posts/:id", authMiddleware, async (req, res) => {
+router.delete("/posts/:postsid", authMiddleware, async (req, res) => {
     try {
+        const { postsid } = req.params;
+        const { userId } = req.user;
+
+        // 게시글 존재 여부 및 작성자 확인
         const post = await prisma.post.findUnique({
-            where: { postsid: parseInt(req.params.id) }
+            where: { postsid: +postsid },
+            include: { user: true }
         });
-        // 파일도 함께 삭제
-        if (post.fileUrls) {
-            const urls = JSON.parse(post.fileUrls);
-            await Promise.all(urls.map(url => deleteFromS3(url)));
+
+        if (!post) {
+            return res.status(404).json({ message: "게시글을 찾을 수 없습니다." });
         }
-        await prisma.post.delete({
-            where: { postsid: parseInt(req.params.id) }
+
+        if (post.userId !== userId) {
+            return res.status(403).json({ message: "게시글 삭제 권한이 없습니다." });
+        }
+
+        // 트랜잭션으로 관련 데이터 모두 삭제
+        await prisma.$transaction(async (tx) => {
+            // 1. 게시글의 좋아요 삭제
+            await tx.postLike.deleteMany({
+                where: { postsid: +postsid }
+            });
+
+            // 2. 게시글의 댓글에 달린 좋아요 삭제
+            await tx.commentLike.deleteMany({
+                where: {
+                    comment: {
+                        postsid: +postsid
+                    }
+                }
+            });
+
+            // 3. 게시글의 댓글 삭제
+            await tx.comment.deleteMany({
+                where: { postsid: +postsid }
+            });
+
+            // 4. 마지막으로 게시글 삭제
+            await tx.post.delete({
+                where: { postsid: +postsid }
+            });
         });
-        return res.status(200).json({ message: "게시글이 삭제되었습니다." });
+
+        return res.status(200).json({ 
+            message: "게시글이 삭제되었습니다." 
+        });
     } catch (error) {
         console.error('Error:', error);
-        return res.status(500).json({
-            message: "게시글 삭제 중 오류가 발생했습니다."
+        return res.status(500).json({ 
+            message: "게시글 삭제 중 오류가 발생했습니다." 
         });
     }
 });
