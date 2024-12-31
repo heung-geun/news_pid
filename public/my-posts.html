@@ -66,6 +66,17 @@
         .main-button:hover {
             background-color: #1976D2;
         }
+        .delete-button {
+            background-color: #ff4444;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: #cc0000;
+        }
     </style>
 </head>
 <body>
@@ -81,6 +92,7 @@
                     <th>제목</th>
                     <th>작성일</th>
                     <th>수정</th>
+                    <th>삭제</th>
                 </tr>
             </thead>
             <tbody id="postsTableBody">
@@ -127,6 +139,7 @@
                             <td><a href="post-detail.html?id=${post.postsid}" style="text-decoration: none; color: inherit;">${post.title}</a></td>
                             <td>${date}</td>
                             <td><button class="edit-button" onclick="location.href='edit-post.html?id=${post.postsid}'">수정</button></td>
+                            <td><button class="delete-button" onclick="deletePost(${post.postsid})">삭제</button></td>
                         `;
                         tableBody.appendChild(row);
                     });
@@ -134,6 +147,33 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('게시글을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            const token = localStorage.getItem('userToken');
+            try {
+                const response = await fetch(`http://localhost:3030/api/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('게시글이 삭제되었습니다.');
+                    loadMyPosts(); // 목록 새로고침
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '게시글 삭제에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글 삭제 중 오류가 발생했습니다.');
             }
         }
 

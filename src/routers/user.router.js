@@ -5,8 +5,28 @@ import authMiddleware from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import generateRandomNumber from "../utils/randomnumber.js";
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
+
+// uploads 폴더가 없으면 생성
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
+
+// 이미지 저장을 위한 multer 설정
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
 
 // GET /api/users 요청 처리
 router.get("/users", (req, res) => {
@@ -371,6 +391,46 @@ router.post("/social/auth", async (req, res) => {
     console.error(error);
     return res.status(500).json({ errorMessage: "서버 에러" });
   }
+});
+
+// 프로필 수정 API
+router.patch("/users/me", authMiddleware, upload.single('profileImage'), async (req, res) => {
+    try {
+        const { userId } = req.user;
+        const { nickname, age, interest, introduce } = req.body;
+        
+        const updateData = {
+            nickname,
+            age: parseInt(age),
+            interest,
+            introduce
+        };
+
+        if (req.file) {
+            updateData.profileimage = `/uploads/${req.file.filename}`;
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { userId: +userId },
+            data: updateData,
+            select: {
+                userId: true,
+                nickname: true,
+                age: true,
+                interest: true,
+                introduce: true,
+                profileimage: true
+            }
+        });
+
+        return res.status(200).json({ 
+            message: "프로필이 수정되었습니다.",
+            data: updatedUser
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ message: "프로필 수정 중 오류가 발생했습니다." });
+    }
 });
 
 export default router;

@@ -1,8 +1,22 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
+import multer from 'multer';
+import path from 'path';
 
 const router = express.Router();
+
+// 이미지 저장을 위한 multer 설정
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/') // 'uploads' 디렉토리에 파일 저장
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)) // 파일명 중복 방지
+    }
+});
+
+const upload = multer({ storage: storage });
 
 router.get("/posts/all", async (req, res) => {
   const posts = await prisma.post.findMany({
@@ -218,6 +232,37 @@ router.get("/posts/my", authMiddleware, async (req, res) => {
       message: "내 게시글 조회 중 오류가 발생했습니다."
     });
   }
+});
+
+// 프로필 수정 API에 이미지 업로드 미들웨어 추가
+router.patch("/me", authMiddleware, upload.single('profileImage'), async (req, res) => {
+    try {
+        const { userId } = req.user;
+        const { nickname, age, interest, introduce } = req.body;
+        
+        // 업데이트할 데이터 객체
+        const updateData = {
+            nickname,
+            age: parseInt(age),
+            interest,
+            introduce
+        };
+
+        // 이미지가 업로드된 경우 이미지 경로 추가
+        if (req.file) {
+            updateData.profileImage = `/uploads/${req.file.filename}`;
+        }
+
+        await prisma.user.update({
+            where: { userId: +userId },
+            data: updateData
+        });
+
+        return res.status(200).json({ message: "프로필이 수정되었습니다." });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ message: "프로필 수정 중 오류가 발생했습니다." });
+    }
 });
 
 export default router;

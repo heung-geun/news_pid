@@ -120,6 +120,9 @@
             }
         }
 
+        // 이미지 input에 change 이벤트 리스너 추가
+        document.getElementById('profileImage').addEventListener('change', previewImage);
+
         // 현재 프로필 정보 불러오기
         async function loadProfile() {
             const token = localStorage.getItem('userToken');
@@ -160,25 +163,28 @@
                 return;
             }
 
-            // FormData 대신 JSON 형식으로 데이터 전송
-            const updateData = {
-                nickname: document.getElementById('nickname').value,
-                age: parseInt(document.getElementById('age').value),
-                interest: document.getElementById('interest').value,
-                introduce: document.getElementById('introduce').value
-            };
+            const formData = new FormData();
+            formData.append('nickname', document.getElementById('nickname').value);
+            formData.append('age', document.getElementById('age').value);
+            formData.append('interest', document.getElementById('interest').value);
+            formData.append('introduce', document.getElementById('introduce').value);
+
+            const imageFile = document.getElementById('profileImage').files[0];
+            if (imageFile) {
+                formData.append('profileImage', imageFile);
+            }
 
             try {
-                const response = await fetch('http://localhost:3030/api/me', {
+                const response = await fetch('http://localhost:3030/api/users/me', {
                     method: 'PATCH',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify(updateData)
+                    body: formData // Content-Type 헤더는 자동으로 설정됨
                 });
 
                 if (response.ok) {
+                    const result = await response.json();
                     alert('프로필이 성공적으로 수정되었습니다.');
                     window.location.href = 'index.html';
                 } else {
