@@ -450,4 +450,34 @@ router.patch("/users/me", authMiddleware, upload.single('profileImage'), async (
     }
 });
 
+// 현재 로그인한 사용자 정보 조회
+router.get("/users/me", authMiddleware, async (req, res) => {
+    try {
+        const { userId } = req.user;
+
+        const user = await prisma.user.findUnique({
+            where: { userId: +userId },
+            select: {
+                userId: true,
+                nickname: true,
+                email: true,
+                profileimage: true,
+                interest: true,
+                introduce: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+        }
+
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ 
+            message: "사용자 정보 조회 중 오류가 발생했습니다." 
+        });
+    }
+});
+
 export default router;
