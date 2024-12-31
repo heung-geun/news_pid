@@ -90,50 +90,57 @@
 </head>
 <body>
     <div class="signup-form">
-        <h2>회원가입</h2>
-        <div class="form-group">
-            <label for="email">이메일:</label>
-            <div class="email-group">
-                <input type="email" id="email" required>
-                <button onclick="sendVerification()">인증번호</button>
+        <form id="signupForm">
+            <h2>회원가입</h2>
+            <div class="form-group">
+                <label for="email">이메일:</label>
+                <div class="email-group">
+                    <input type="email" id="email" required>
+                    <button type="button">인증번호</button>
+                </div>
+                <div id="verificationGroup" class="verification-group">
+                    <input type="text" id="verificationCode" placeholder="인증번호 6자리 입력" maxlength="6">
+                    <button type="button" style="margin-top: 5px;">확인</button>
+                </div>
             </div>
-            <div id="verificationGroup" class="verification-group">
-                <input type="text" id="verificationCode" placeholder="인증번호 6자리 입력" maxlength="6">
-                <button onclick="verifyCode()" style="margin-top: 5px;">확인</button>
+            <div class="form-group">
+                <label for="password">비밀번호:</label>
+                <input type="password" id="password" required>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="password">비밀번호:</label>
-            <input type="password" id="password" required>
-        </div>
-        <div class="form-group">
-            <label for="passwordCheck">비밀번호 확인:</label>
-            <input type="password" id="passwordCheck" required>
-        </div>
-        <div class="form-group">
-            <label for="nickname">닉네임:</label>
-            <input type="text" id="nickname" required>
-        </div>
-        <div class="form-group">
-            <label for="gameType">선호하는 게임:</label>
-            <select id="gameType" required>
-                <option value="">선택해주세요</option>
-                <option value="lol">LOL</option>
-                <option value="lost_ark">로스트아크</option>
-                <option value="maplestory">메이플스토리</option>
-                <option value="valorant">발로란트</option>
-                <option value="etc">기타</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="introduction">하고 싶은 한마디:</label>
-            <textarea id="introduction" rows="3" placeholder="자기소개나 하고 싶은 말을 적어주세요"></textarea>
-        </div>
-        <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
-        <button onclick="signup()" id="signupButton" disabled>회원가입</button>
-        <button onclick="location.href='login.html'" style="background-color: #2196F3; margin-top: 10px;">로그인하기</button>
-        <button onclick="location.href='index.html'" style="background-color: #666; margin-top: 10px;">취소</button>
+            <div class="form-group">
+                <label for="passwordCheck">비밀번호 확인:</label>
+                <input type="password" id="passwordCheck" required>
+            </div>
+            <div class="form-group">
+                <label for="nickname">닉네임:</label>
+                <input type="text" id="nickname" required>
+            </div>
+            <div class="form-group">
+                <label for="gameType">선호하는 게임:</label>
+                <select id="gameType" required>
+                    <option value="">선택해주세요</option>
+                    <option value="League of Legends">League of Legends</option>
+                    <option value="Lost Ark">Lost Ark</option>
+                    <option value="FIFA ONLINE 4">FIFA ONLINE 4</option>
+                    <option value="VALORANT">VALORANT</option>
+                    <option value="Overwatch 2">Overwatch 2</option>
+                    <option value="Diablo 4">Diablo 4</option>
+                    <option value="Battlegrounds">Battlegrounds</option>
+                    <option value="Maple Story">Maple Story</option>
+                    <option value="Starcraft">Starcraft</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="introduction">하고 싶은 한마디:</label>
+                <textarea id="introduction" rows="3" placeholder="자기소개나 하고 싶은 말을 적어주세요"></textarea>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            <button type="submit" id="signupButton" disabled>회원가입</button>
+            <button type="button" onclick="location.href='login.html'" style="background-color: #2196F3; margin-top: 10px;">로그인하기</button>
+            <button type="button" onclick="location.href='index.html'" style="background-color: #666; margin-top: 10px;">취소</button>
+        </form>
     </div>
 
     <script>
@@ -181,17 +188,11 @@
         }
 
         async function verifyCode() {
-            const code = parseInt(document.getElementById('verificationCode').value);
+            const code = document.getElementById('verificationCode').value;
             const email = document.getElementById('email').value;
             const errorMessage = document.getElementById('errorMessage');
             const successMessage = document.getElementById('successMessage');
             const signupButton = document.getElementById('signupButton');
-
-            if (!code || isNaN(code)) {
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = '❌ 올바른 인증번호를 입력해주세요.';
-                return;
-            }
 
             try {
                 const response = await fetch('http://localhost:3030/api/checkemail', {
@@ -201,7 +202,7 @@
                     },
                     body: JSON.stringify({ 
                         email: email,
-                        authCode: code
+                        authCode: parseInt(code)
                     }),
                 });
 
@@ -232,7 +233,9 @@
             }
         }
 
-        async function signup() {
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
             if (!isEmailVerified) {
                 alert('이메일 인증이 필요합니다.');
                 return;
@@ -244,12 +247,6 @@
             const nickname = document.getElementById('nickname').value;
             const gameType = document.getElementById('gameType').value;
             const introduction = document.getElementById('introduction').value;
-
-            // 입력값 검증
-            if (!email || !password || !nickname || !gameType) {
-                alert('필수 항목을 모두 입력해주세요.');
-                return;
-            }
 
             if (password !== passwordCheck) {
                 alert('비밀번호가 일치하지 않습니다.');
@@ -265,9 +262,12 @@
                     body: JSON.stringify({
                         email,
                         password,
+                        passwordCheck,
                         nickname,
-                        gameType,
-                        introduction: introduction || null,  // 빈 문자열이면 null로 설정
+                        name: nickname,
+                        age: 0,
+                        interest: gameType,
+                        introduce: introduction,
                         emailVerified: true
                     })
                 });
@@ -275,16 +275,20 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('회원가입이 완료되었습니다!');
+                    alert('회원가입이 완료되었습니다.');
                     window.location.href = 'login.html';
                 } else {
-                    alert(data.message || '회원가입에 실패했습니다.');
+                    alert(data.errorMessage || '회원가입에 실패했습니다.');
+                    console.error('Server Error:', data);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('회원가입 처리 중 오류가 발생했습니다.');
+                alert('회원가입 처 오류가 발생했습니다.');
             }
-        }
+        });
+
+        document.querySelector('.email-group button').addEventListener('click', sendVerification);
+        document.querySelector('#verificationGroup button').addEventListener('click', verifyCode);
     </script>
 </body>
 </html>
