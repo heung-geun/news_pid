@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>게시글 상세</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <style>
+        .main {
+            margin: 50px;
+        }
+        .postLinks {
+            margin-right: 50px;
+        }
+        .dropdown {
+            margin-right: 100px;
+        }
+        .buttons {
+            margin-left: 100px;
+        }
+        
+        .post-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .post-title {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .post-info {
+            color: #666;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-content {
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .like-button {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .like-button.active {
+            background-color: #cccccc;
+        }
+
+        .back-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .popular-badge {
+            background-color: #ff4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <nav>
+            <ul>
+                <li><strong>오X오조 뉴스 피드</strong></li>
+            </ul>
+            <ul>
+                <li class="postLinks"><a href="popular.html">인기글</a></li>
+                <details class="dropdown">
+                    <summary>게시글</summary>
+                    <ul>
+                        <li><a href="main.html">전체</a></li>
+                        <li><a href="#" onclick="loadPosts('lol'); return false;">리그 오브 레전드</a></li>
+                        <li><a href="#" onclick="loadPosts('lost_ark'); return false;">로스트 아크</a></li>
+                        <li><a href="#" onclick="loadPosts('maplestory'); return false;">메이플 스토리</a></li>
+                        <li><a href="#" onclick="loadPosts('balorant'); return false;">발로란트</a></li>
+                        <li><a href="#" onclick="loadPosts('etc'); return false;">기타</a></li>
+                    </ul>
+                </details>
+                <button class="buttons" onclick="handleLoginLogout()">로그인하기</button>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="post-container" id="postContainer">
+        <!-- 게시글 내용이 여기에 동적으로 추가됩니다 -->
+    </div>
+
+    <script>
+        async function loadPostDetail() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const postId = urlParams.get('id');
+                const token = localStorage.getItem('userToken');
+
+                const response = await fetch(`http://localhost:3030/api/posts/${postId}`, {
+                    headers: token ? {
+                        'Authorization': `Bearer ${token}`
+                    } : {}
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const post = data.data;
+                    const isPopular = post.likeCount >= 10;
+
+                    document.getElementById('postContainer').innerHTML = `
+                        <div class="post-header">
+                            <div class="post-title">
+                                ${post.title}
+                                ${isPopular ? '<span class="popular-badge">인기</span>' : ''}
+                            </div>
+                            <div class="post-info">
+                                <span>작성자: ${post.userId}</span>
+                                <span>작성일: ${new Date(post.createdAt).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            ${post.content}
+                        </div>
+                        <div class="post-actions">
+                            <div>
+                                <span>❤️ ${post.likeCount || 0}</span>
+                                ${token ? `
+                                    <button class="like-button ${post.isLiked ? 'active' : ''}" 
+                                        onclick="toggleLike(${post.postsid})">
+                                        ${post.isLiked ? '좋아요 취소' : '좋아요'}
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <button class="back-button" onclick="location.href='main.html'">목록으로</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function toggleLike(postId) {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3030/api/posts/${postId}/likes`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    loadPostDetail(); // 게시글 새로고침
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '좋아요 처리 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('좋아요 처리 중 오류가 발생했습니다.');
+            }
+        }
+
+        function handleLoginLogout() {
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                localStorage.removeItem('userToken');
+                location.reload();
+            } else {
+                location.href = 'login.html';
+            }
+        }
+
+        window.onload = function() {
+            loadPostDetail();
+            const token = localStorage.getItem('userToken');
+            const loginButton = document.querySelector('.buttons');
+            if (token) {
+                loginButton.textContent = '로그아웃';
+            } else {
+                loginButton.textContent = '로그인하기';
+            }
+        };
+    </script>
+</body>
+</html>

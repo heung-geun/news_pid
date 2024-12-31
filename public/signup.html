@@ -1,126 +1,319 @@
-<!doctype html>
-<html>
-  <head>
-    <title>회원가입</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원가입 - 오X오조 뉴스 피드</title>
     <style>
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
-      .signup-form {
-        width: 300px;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-      }
-      .form-group {
-        margin-bottom: 15px;
-      }
-      input {
-        width: 100%;
-        padding: 8px;
-        margin-top: 5px;
-      }
-      button {
-        width: 100%;
-        padding: 10px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .email-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .email-group input {
+            flex: 2;
+        }
+
+        .email-group button {
+            flex: 1;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .verification-group {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .signup-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .back-button {
+            background-color: #666;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message {
+            color: #4CAF50;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
     </style>
-  </head>
-  <body>
-    <div class="signup-form">
-      <h2>회원가입</h2>
-      <div class="form-group">
-        <label for="email">이메일:</label>
-        <input type="email" id="email" required />
-      </div>
-      <div class="form-group">
-        <label for="password">비밀번호:</label>
-        <input type="password" id="password" required />
-      </div>
-      <div class="form-group">
-        <label for="passwordCheck">비밀번호 확인:</label>
-        <input type="password" id="passwordCheck" required />
-      </div>
-      <div class="form-group">
-        <label for="nickname">닉네임:</label>
-        <input type="text" id="nickname" required />
-      </div>
-      <div class="form-group">
-        <label for="name">이름:</label>
-        <input type="text" id="name" required />
-      </div>
-      <div class="form-group">
-        <label for="age">나이:</label>
-        <input type="number" id="age" required />
-      </div>
-      <div class="form-group">
-        <label for="interest">관심사:</label>
-        <input type="text" id="interest" />
-      </div>
-      <div class="form-group">
-        <label for="introduce">자기소개:</label>
-        <textarea id="introduce" rows="3" style="width: 100%"></textarea>
-      </div>
-      <button onclick="signup()">가입하기</button>
-      <button
-        onclick="location.href='index.html'"
-        style="background-color: #666; margin-top: 10px"
-      >
-        취소
-      </button>
+</head>
+<body>
+    <div class="container">
+        <h2 class="title">회원가입</h2>
+        <form id="signupForm" onsubmit="handleSignup(event)">
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <div class="email-group">
+                    <input type="email" id="email" name="email" required>
+                    <button type="button" onclick="sendVerification()">인증번호 전송</button>
+                </div>
+                <div id="verificationGroup" class="verification-group">
+                    <input type="text" id="verificationCode" placeholder="인증번호 6자리 입력" maxlength="6">
+                    <button type="button" onclick="verifyCode()">확인</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="nickname">닉네임</label>
+                <input type="text" id="nickname" name="nickname" required>
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="passwordCheck">비밀번호 확인</label>
+                <input type="password" id="passwordCheck" name="passwordCheck" required>
+            </div>
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="age">나이</label>
+                <input type="number" id="age" name="age" required>
+            </div>
+            <div class="form-group">
+                <label for="interest">관심 게임</label>
+                <input type="text" id="interest" name="interest" required>
+            </div>
+            <div class="form-group">
+                <label for="introduce">자기소개</label>
+                <textarea id="introduce" name="introduce" required></textarea>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            <div class="button-group">
+                <button type="submit" class="signup-button" disabled id="signupButton">회원가입</button>
+                <button type="button" class="back-button" onclick="location.href='login.html'">돌아가기</button>
+            </div>
+        </form>
     </div>
 
     <script>
-      async function signup() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const passwordCheck = document.getElementById("passwordCheck").value;
-        const nickname = document.getElementById("nickname").value;
-        const name = document.getElementById("name").value;
-        const age = document.getElementById("age").value;
-        const interest = document.getElementById("interest").value;
-        const introduce = document.getElementById("introduce").value;
+        let isEmailVerified = false;
 
-        try {
-          const response = await fetch("http://localhost:3030/api/users", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email,
-              password,
-              passwordCheck,
-              nickname,
-              name,
-              age,
-              interest,
-              introduce,
-            }),
-          });
+        async function sendVerification() {
+            const email = document.getElementById('email').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const verificationGroup = document.getElementById('verificationGroup');
 
-          const data = await response.json();
+            if (!email) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 이메일을 입력해주세요.';
+                return;
+            }
 
-          if (response.ok) {
-            alert("회원가입이 완료되었습니다!");
-            window.location.href = "login.html";
-          } else {
-            alert(data.errorMessage || "회원가입에 실패했습니다.");
-          }
-        } catch (error) {
-          console.error("Error:", error);
-          alert("회원가입 처리 중 오류가 발생했습니다.");
+            try {
+                const response = await fetch('http://localhost:3030/api/emailauth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMessage.style.display = 'block';
+                    successMessage.textContent = '📧 인증번호가 전송되었습니다. 이메일을 확인해주세요!';
+                    verificationGroup.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = '❌ ' + (data.message || '인증번호 전송에 실패했습니다.');
+                    successMessage.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 서버 오류가 발생했습니다.';
+                successMessage.style.display = 'none';
+            }
         }
-      }
+
+        async function verifyCode() {
+            const code = document.getElementById('verificationCode').value;
+            const email = document.getElementById('email').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const signupButton = document.getElementById('signupButton');
+            const verificationGroup = document.getElementById('verificationGroup');
+
+            if (!code || !email) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 이메일과 인증번호를 모두 입력해주세요.';
+                return;
+            }
+
+            try {
+                const requestData = { 
+                    email: email,
+                    authCode: code
+                };
+                console.log('Sending verification request:', requestData);
+
+                const response = await fetch('http://localhost:3030/api/checkemail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                });
+
+                const data = await response.json();
+                console.log('Server response:', data);
+
+                if (response.ok) {
+                    isEmailVerified = true;
+                    successMessage.style.display = 'block';
+                    successMessage.textContent = '✅ 이메일 인증이 완료되었습니다!';
+                    errorMessage.style.display = 'none';
+                    signupButton.disabled = false;
+                    
+                    verificationGroup.innerHTML = `
+                        <div style="color: #4CAF50; padding: 10px; text-align: center;">
+                            <strong>✓ 인증 완료</strong>
+                        </div>
+                    `;
+                    
+                    document.querySelector('.email-group button').disabled = true;
+                    document.querySelector('.email-group button').style.backgroundColor = '#cccccc';
+                    document.getElementById('email').disabled = true;
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = '❌ ' + (data.message || '인증번호가 일치하지 않습니다.');
+                    successMessage.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 서버 오류가 발생했습니다.';
+                successMessage.style.display = 'none';
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            if (!isEmailVerified) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '이메일 인증이 필요합니다.';
+                return;
+            }
+
+            const formData = {
+                email: document.getElementById('email').value,
+                nickname: document.getElementById('nickname').value,
+                password: document.getElementById('password').value,
+                passwordCheck: document.getElementById('passwordCheck').value,
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                interest: document.getElementById('interest').value,
+                introduce: document.getElementById('introduce').value,
+            };
+
+            try {
+                const response = await fetch('http://localhost:3030/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMessage.style.display = 'block';
+                    successMessage.textContent = '회원가입이 완료되었습니다.';
+                    errorMessage.style.display = 'none';
+                    setTimeout(() => {
+                        location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = data.message;
+                    successMessage.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '서버 오류가 발생했습니다.';
+                successMessage.style.display = 'none';
+            }
+        }
     </script>
-  </body>
+</body>
 </html>

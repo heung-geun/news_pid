@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>오X오조 인기 뉴스</title>
+    <style>
+      .main {
+        margin: 50px;
+      }
+      .postLinks {
+        margin-right: 50px;
+      }
+      .dropdown {
+        margin-right: 100px;
+      }
+      .buttons {
+        margin-left: 100px;
+      }
+      .popular-badge {
+        background-color: #ff4444;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <nav>
+        <ul>
+          <li><strong>오X오조 뉴스 피드</strong></li>
+        </ul>
+        <ul>
+          <li class="postLinks"><a href="main.html">전체글</a></li>
+          <details class="dropdown">
+            <summary>게시글</summary>
+            <ul>
+              <li><a href="main.html">전체</a></li>
+              <li>
+                <a href="type.lol.html">리그 오브 레전드</a>
+              </li>
+              <li>
+                <a href="type.lost_ark.html">로스트 아크</a>
+              </li>
+              <li>
+                <a href="type.maplestory.html">메이플 스토리</a>
+              </li>
+              <li>
+                <a href="type.balorant.html">발로란트</a>
+              </li>
+              <li><a href="type.etc.html">기타</a></li>
+            </ul>
+          </details>
+          <button class="buttons" onclick="location.href='login.html'">
+            로그인하기
+          </button>
+        </ul>
+      </nav>
+    </div>
+    <div id="posts-container"></div>
+
+    <script>
+      window.onload = async function() {
+        await loadPopularPosts();
+        checkLoginStatus();
+      };
+
+      async function loadPopularPosts() {
+        try {
+          const response = await fetch('http://localhost:3030/api/posts/popular');
+          const data = await response.json();
+          
+          const postsContainer = document.getElementById('posts-container');
+          postsContainer.innerHTML = '';
+
+          if (data.data && data.data.length > 0) {
+            data.data.forEach(post => {
+              const postElement = document.createElement('article');
+              
+              postElement.innerHTML = `
+                <header>
+                  <h3>
+                    ${post.title}
+                    <span class="popular-badge">인기</span>
+                  </h3>
+                  <p>분류: ${post.type}</p>
+                </header>
+                <p>${post.content ? post.content.substring(0, 100) + '...' : ''}</p>
+                <footer>
+                  <p>❤️ ${post.likeCount || 0}</p>
+                  <p>작성일: ${new Date(post.createdAt).toLocaleDateString()}</p>
+                </footer>
+              `;
+              
+              postElement.style.cursor = 'pointer';
+              postElement.onclick = () => {
+                location.href = `post-detail.html?id=${post.postsid}`;
+              };
+              
+              postsContainer.appendChild(postElement);
+            });
+          } else {
+            postsContainer.innerHTML = '<p style="text-align: center;">인기 게시글이 없습니다.</p>';
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          document.getElementById('posts-container').innerHTML = 
+            '<p style="text-align: center;">게시글을 불러오는 중 오류가 발생했습니다.</p>';
+        }
+      }
+
+      function checkLoginStatus() {
+        const token = localStorage.getItem('userToken');
+        const loginButton = document.querySelector('.buttons');
+        
+        if (token) {
+          loginButton.textContent = '로그아웃';
+          loginButton.onclick = () => {
+            localStorage.removeItem('userToken');
+            location.reload();
+          };
+        } else {
+          loginButton.textContent = '로그인하기';
+          loginButton.onclick = () => location.href = 'login.html';
+        }
+      }
+    </script>
+  </body>
+</html> 
