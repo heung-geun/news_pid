@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>게시글 상세</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f6f7;
+        }
+        .post-container {
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .post-header {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .post-type {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 3px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .post-title {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .post-info {
+            color: #666;
+            font-size: 14px;
+        }
+        .post-content {
+            line-height: 1.6;
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+        .button-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .back-button {
+            background-color: #666;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="post-container">
+        <div class="post-header">
+            <div class="post-type" id="postType"></div>
+            <h1 class="post-title" id="postTitle"></h1>
+            <div class="post-info" id="postInfo"></div>
+        </div>
+        <div class="post-content" id="postContent"></div>
+        <div class="button-container">
+            <button class="back-button" onclick="location.href='index.html'">목록으로</button>
+        </div>
+    </div>
+
+    <script>
+        window.onload = async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const postsid = urlParams.get('id');
+
+            if (!postsid) {
+                alert('잘못된 접근입니다.');
+                location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3030/api/posts/detail/${postsid}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const post = data.data;
+                    document.getElementById('postType').textContent = post.type;
+                    document.getElementById('postTitle').textContent = post.title;
+                    document.getElementById('postInfo').textContent = 
+                        `작성일: ${new Date(post.createdAt).toLocaleString()}`;
+                    document.getElementById('postContent').textContent = post.content;
+                } else {
+                    alert('게시글을 불러올 수 없습니다.');
+                    location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글을 불러오는 중 오류가 발생했습니다.');
+                location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html> 

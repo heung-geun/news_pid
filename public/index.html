@@ -2,30 +2,168 @@
 <html>
 <head>
     <title>메인 페이지</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .button-container {
+            margin: 20px 0;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .login-button {
+            background-color: #03C75A;
+            color: white;
+        }
+        .logout-button {
+            background-color: #ff4444;
+            color: white;
+        }
+        .main-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .post-button {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        /* 게시글 목록 스타일 */
+        .posts-container {
+            width: 80%;
+            max-width: 1000px;
+            margin-top: 20px;
+        }
+        .post-type-buttons {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .type-button {
+            background-color: #ddd;
+            color: black;
+        }
+        .type-button.active {
+            background-color: #2196F3;
+            color: white;
+        }
+        .posts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .posts-table th, .posts-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .posts-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .posts-table tr:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
 </head>
 <body>
     <div id="userInfo"></div>
-    <button id="logoutBtn" style="display: none;" onclick="location.href='logout.html'">로그아웃</button>
-    <div id="loginOptions" style="display: none;">
-        <!-- 기존 로그인 버튼 -->
-        <button onclick="location.href='login.html'">일반 로그인</button>
-        <!-- 네이버 로그인 버튼 -->
-        <button onclick="location.href='social_login.html'">네이버 로그인</button>
-        <!-- 회원가입 버튼 -->
-        <button onclick="location.href='signup.html'">회원가입</button>
+    <div class="button-container">
+        <div id="loggedInButtons" style="display: none;">
+            <button class="main-button" onclick="location.href='index.html'">메인화면</button>
+            <button class="post-button" onclick="location.href='create-post.html'">게시글 작성</button>
+            <button class="logout-button" onclick="location.href='logout.html'">로그아웃</button>
+        </div>
+        <div id="loginOptions" style="display: none;">
+            <button class="login-button" onclick="location.href='login.html'">일반 로그인</button>
+            <button class="login-button" onclick="location.href='social_login.html'">네이버 로그인</button>
+            <button onclick="location.href='signup.html'">회원가입</button>
+        </div>
+    </div>
+
+    <div class="posts-container">
+        <div class="post-type-buttons">
+            <button class="type-button active" onclick="loadPosts('all', this)">전체</button>
+            <button class="type-button" onclick="loadPosts('lol', this)">LOL</button>
+            <button class="type-button" onclick="loadPosts('lost_ark', this)">로스트아크</button>
+            <button class="type-button" onclick="loadPosts('maplestory', this)">메이플스토리</button>
+            <button class="type-button" onclick="loadPosts('valorant', this)">발로란트</button>
+            <button class="type-button" onclick="loadPosts('etc', this)">기타</button>
+        </div>
+        <table class="posts-table">
+            <thead>
+                <tr>
+                    <th>유형</th>
+                    <th>제목</th>
+                    <th>작성일</th>
+                </tr>
+            </thead>
+            <tbody id="postsTableBody">
+                <!-- 게시글이 여기에 동적으로 추가됩니다 -->
+            </tbody>
+        </table>
     </div>
 
     <script>
+        async function loadPosts(type, clickedButton = null) {
+            try {
+                // 버튼 스타일 업데이트
+                document.querySelectorAll('.type-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                
+                // 클릭된 버튼이 있는 경우에만 active 클래스 추가
+                if (clickedButton) {
+                    clickedButton.classList.add('active');
+                } else {
+                    // 페이지 로드 시 'all' 버튼을 활성화
+                    document.querySelector('.type-button[onclick="loadPosts(\'all\', this)"]').classList.add('active');
+                }
+
+                // 게시글 불러오기
+                const response = await fetch(`http://localhost:3030/api/posts/${type}`);
+                const data = await response.json();
+
+                const tableBody = document.getElementById('postsTableBody');
+                tableBody.innerHTML = ''; // 기존 내용 비우기
+
+                data.data.forEach(post => {
+                    const row = document.createElement('tr');
+                    const date = new Date(post.createdAt).toLocaleDateString();
+                    
+                    row.innerHTML = `
+                        <td>${post.type}</td>
+                        <td><a href="post-detail.html?id=${post.postsid}" style="text-decoration: none; color: inherit;">${post.title}</a></td>
+                        <td>${date}</td>
+                    `;
+                    row.style.cursor = 'pointer';
+                    row.onclick = function() {
+                        location.href = `post-detail.html?id=${post.postsid}`;
+                    };
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
         window.onload = async function() {
-            // userToken으로 통합 (네이버 토큰이나 일반 로그인 토큰)
             const token = localStorage.getItem('userToken');
             const userInfoDiv = document.getElementById('userInfo');
-            const logoutBtn = document.getElementById('logoutBtn');
+            const loggedInButtons = document.getElementById('loggedInButtons');
             const loginOptions = document.getElementById('loginOptions');
 
             if (token) {
                 try {
-                    // 토큰을 사용하여 사용자 정보 가져오기
                     const response = await fetch('http://localhost:3030/api/me', {
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -35,10 +173,9 @@
                     if (response.ok) {
                         const userData = await response.json();
                         userInfoDiv.innerHTML = `환영합니다, ${userData.data.nickname}님!`;
-                        logoutBtn.style.display = 'block';
+                        loggedInButtons.style.display = 'block';
                         loginOptions.style.display = 'none';
                     } else {
-                        // 토큰이 유효하지 않은 경우
                         localStorage.removeItem('userToken');
                         showLoginOptions();
                     }
@@ -49,21 +186,19 @@
             } else {
                 showLoginOptions();
             }
+
+            // 페이지 로드 시 전체 게시글 표시
+            loadPosts('all');
         }
 
         function showLoginOptions() {
             const userInfoDiv = document.getElementById('userInfo');
-            const logoutBtn = document.getElementById('logoutBtn');
+            const loggedInButtons = document.getElementById('loggedInButtons');
             const loginOptions = document.getElementById('loginOptions');
 
             userInfoDiv.innerHTML = '로그인이 필요합니다.';
-            logoutBtn.style.display = 'none';
+            loggedInButtons.style.display = 'none';
             loginOptions.style.display = 'block';
-        }
-
-        function naverLogin() {
-            window.open('social_login_callback.html', 'naverLogin', 
-                'width=500,height=600,scrollbars=yes');
         }
     </script>
 </body>
