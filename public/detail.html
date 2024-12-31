@@ -1,0 +1,199 @@
+<!-- 댓글 작성 영역 -->
+<div class="comment-form">
+    <h3>댓글 작성</h3>
+    <textarea id="commentContent" placeholder="댓글을 입력하세요"></textarea>
+    <button onclick="submitComment()">댓글 작성</button>
+</div>
+
+<!-- 댓글 목록 영역 -->
+<div class="comments-section">
+    <h3>댓글 목록</h3>
+    <div id="commentsList"></div>
+</div>
+
+<style>
+.comment-form {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.comment-form textarea {
+    width: 100%;
+    min-height: 80px;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.comment-form button {
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.comments-section {
+    margin-top: 30px;
+}
+
+.comment-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: bold;
+}
+
+.comment-date {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.comment-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.like-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+}
+
+.like-button.liked {
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+</style>
+
+<script>
+// 댓글 작성
+async function submitComment() {
+    const content = document.getElementById('commentContent').value;
+    if (!content.trim()) {
+        alert('댓글 내용을 입력해주세요.');
+        return;
+    }
+
+    const postId = getPostIdFromUrl();
+    const token = localStorage.getItem('userToken');
+
+    try {
+        const response = await fetch(`http://localhost:3030/api/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            document.getElementById('commentContent').value = '';
+            loadComments(); // 댓글 목록 새로고침
+        } else {
+            alert(data.message || '댓글 작성에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('댓글 작성 중 오류가 발생했습니다.');
+    }
+}
+
+// 댓글 목록 로드
+async function loadComments() {
+    const postId = getPostIdFromUrl();
+    try {
+        const response = await fetch(`http://localhost:3030/api/posts/${postId}/comments`);
+        const comments = await response.json();
+
+        const commentsList = document.getElementById('commentsList');
+        commentsList.innerHTML = comments.map(comment => `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <span class="comment-author">${comment.nickname}</span>
+                    <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+                <div class="comment-actions">
+                    <button class="like-button ${comment.isLiked ? 'liked' : ''}" onclick="toggleCommentLike(${comment.commentId})">
+                        <span>👍</span>
+                        <span>${comment.likeCount}</span>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('댓글 로딩 중 오류가 발생했습니다.');
+    }
+}
+
+// 댓글 좋아요 토글
+async function toggleCommentLike(commentId) {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+
+    try {
+        // 현재 좋아요 상태 확인
+        const statusResponse = await fetch(`http://localhost:3030/api/comments/${commentId}/like`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const { isLiked } = await statusResponse.json();
+
+        // 좋아요 토글
+        const response = await fetch(`http://localhost:3030/api/comments/${commentId}/like`, {
+            method: isLiked ? 'DELETE' : 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            loadComments(); // 댓글 목록 새로고침
+        } else {
+            const data = await response.json();
+            alert(data.message || '좋아요 처리에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('좋아요 처리 중 오류가 발생했습니다.');
+    }
+}
+
+// URL에서 postId 추출
+function getPostIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('postId');
+}
+
+// 페이지 로드 시 댓글 목록 불러오기
+document.addEventListener('DOMContentLoaded', loadComments);
+</script> 

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>게시글 수정</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f6f7;
+        }
+        .edit-form {
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .submit-button, .cancel-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .submit-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .cancel-button {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>게시글 수정</h1>
+    <div class="edit-form">
+        <form id="editForm">
+            <div class="form-group">
+                <label for="type">게시글 유형</label>
+                <select id="type" required>
+                    <option value="LOL">LOL</option>
+                    <option value="로스트아크">로스트아크</option>
+                    <option value="메이플스토리">메이플스토리</option>
+                    <option value="발로란트">발로란트</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="title">제목</label>
+                <input type="text" id="title" required>
+            </div>
+            <div class="form-group">
+                <label for="content">내용</label>
+                <textarea id="content" required></textarea>
+            </div>
+            <div class="button-group">
+                <button type="button" class="cancel-button" onclick="location.href='my-posts.html'">취소</button>
+                <button type="submit" class="submit-button">수정하기</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // URL에서 게시글 ID 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+
+        // 게시글 데이터 불러오기
+        async function loadPost() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3030/api/posts/detail/${postId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('type').value = data.data.type;
+                    document.getElementById('title').value = data.data.title;
+                    document.getElementById('content').value = data.data.content;
+                } else {
+                    alert('게시글을 불러올 수 없습니다.');
+                    window.location.href = 'my-posts.html';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 게시글 수정 제출
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const updateData = {
+                type: document.getElementById('type').value,
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value
+            };
+
+            try {
+                const response = await fetch(`http://localhost:3030/api/posts/${postId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    alert('게시글이 성공적으로 수정되었습니다.');
+                    window.location.href = 'my-posts.html';
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '게시글 수정에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글 수정 중 오류가 발생했습니다.');
+            }
+        });
+
+        // 페이지 로드 시 게시글 데이터 불러오기
+        window.addEventListener('load', loadPost);
+    </script>
+</body>
+</html> 

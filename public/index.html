@@ -76,6 +76,33 @@
         .posts-table tr:hover {
             background-color: #f9f9f9;
         }
+        .profile-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        .profile-button:hover {
+            background-color: #1976D2;
+        }
+
+        .my-posts-button {
+            background-color: #9C27B0;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        .my-posts-button:hover {
+            background-color: #7B1FA2;
+        }
     </style>
 </head>
 <body>
@@ -85,7 +112,9 @@
             <button class="main-button" onclick="location.href='index.html'">메인화면</button>
             <button class="post-button" onclick="location.href='create-post.html'">게시글 작성</button>
             <button class="popular-button" onclick="location.href='popular-posts.html'">인기 게시글</button>
-            <button class="logout-button" onclick="location.href='logout.html'">로그아웃</button>
+            <button class="my-posts-button" onclick="location.href='my-posts.html'">내 게시글</button>
+            <button class="profile-button" onclick="location.href='profile-edit.html'">프로필 수정</button>
+            <button class="logout-button" onclick="logout()">로그아웃</button>
         </div>
         <div id="loginOptions" style="display: none;">
             <button class="login-button" onclick="location.href='login.html'">일반 로그인</button>
@@ -115,6 +144,23 @@
                 <!-- 게시글이 여기에 동적으로 추가됩니다 -->
             </tbody>
         </table>
+    </div>
+
+    <div class="nav-buttons">
+        <div id="loginOptions" style="display: none;">
+            <button class="login-button" onclick="location.href='login.html'">일반 로그인</button>
+            <button class="login-button" onclick="location.href='social_login.html'">네이버 로그인</button>
+            <button onclick="location.href='signup.html'">회원가입</button>
+        </div>
+        
+        <div id="loggedInButtons" style="display: none;">
+            <button class="main-button" onclick="location.href='index.html'">메인화면</button>
+            <button class="post-button" onclick="location.href='create-post.html'">게시글 작성</button>
+            <button class="popular-button" onclick="location.href='popular-posts.html'">인기 게시글</button>
+            <button class="my-posts-button" onclick="location.href='my-posts.html'">내 게시글</button>
+            <button class="profile-button" onclick="location.href='profile-edit.html'">프로필 수정</button>
+            <button class="logout-button" onclick="logout()">로그아웃</button>
+        </div>
     </div>
 
     <script>
@@ -207,6 +253,51 @@
             loggedInButtons.style.display = 'none';
             loginOptions.style.display = 'block';
         }
+
+        // 로그인 상태 체크 함수
+        async function checkLoginStatus() {
+            const token = localStorage.getItem('userToken');
+            const loginOptions = document.getElementById('loginOptions');
+            const loggedInButtons = document.getElementById('loggedInButtons');
+            
+            if (token) {
+                try {
+                    const response = await fetch('http://localhost:3030/api/me', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        loginOptions.style.display = 'none';
+                        loggedInButtons.style.display = 'block';
+                    } else {
+                        // 토큰이 유효하지 않은 경우
+                        localStorage.removeItem('userToken');
+                        loginOptions.style.display = 'block';
+                        loggedInButtons.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    localStorage.removeItem('userToken');
+                    loginOptions.style.display = 'block';
+                    loggedInButtons.style.display = 'none';
+                }
+            } else {
+                // 토큰이 없는 경우
+                loginOptions.style.display = 'block';
+                loggedInButtons.style.display = 'none';
+            }
+        }
+
+        // 로그아웃 함수
+        function logout() {
+            localStorage.removeItem('userToken');
+            location.reload();
+        }
+
+        // 페이지 로드 시 로그인 상태 체크
+        window.addEventListener('load', checkLoginStatus);
     </script>
 </body>
 </html>
