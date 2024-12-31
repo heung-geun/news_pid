@@ -318,15 +318,14 @@
         async function loadComments() {
             const urlParams = new URLSearchParams(window.location.search);
             const postId = urlParams.get('id');
+            const token = localStorage.getItem('userToken');
+            const currentUser = token ? JSON.parse(atob(token.split('.')[1])).userId : null;
 
             try {
                 const response = await fetch(`http://localhost:3030/api/posts/${postId}/comments`);
                 const result = await response.json();
                 
-                // 서버에서 받은 데이터 구조 확인
-                console.log('Received comments:', result);
-
-                const comments = result.data || []; // data 속성이 없으면 빈 배열 사용
+                const comments = result.data || [];
                 const commentsList = document.getElementById('commentsList');
                 
                 if (comments.length === 0) {
@@ -335,17 +334,24 @@
                 }
 
                 commentsList.innerHTML = comments.map(comment => `
-                    <div class="comment-item">
+                    <div class="comment-item" id="comment-${comment.commentId}">
                         <div class="comment-header">
                             <span class="comment-author">${comment.nickname}</span>
                             <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
                         </div>
-                        <div class="comment-content">${comment.content}</div>
+                        <div class="comment-content-area">
+                            <div class="comment-content">${comment.content}</div>
+                            <textarea class="edit-textarea" style="display: none;">${comment.content}</textarea>
+                        </div>
                         <div class="comment-actions">
-                            <button class="comment-like-button" 
-                                    onclick="toggleCommentLike(${comment.commentId})">
+                            <button class="comment-like-button" onclick="toggleCommentLike(${comment.commentId})">
                                 ❤️ <span>${comment.likeCount || 0}</span>
                             </button>
+                            ${comment.userId === currentUser ? `
+                                <button class="edit-button" onclick="toggleEditMode(${comment.commentId})">수정</button>
+                                <button class="save-button" style="display: none;" onclick="updateComment(${comment.commentId})">저장</button>
+                                <button class="cancel-button" style="display: none;" onclick="cancelEdit(${comment.commentId})">취소</button>
+                            ` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -380,6 +386,79 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('좋아요 처리 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 수정 모드 토글 함수
+        function toggleEditMode(commentId) {
+            const commentDiv = document.getElementById(`comment-${commentId}`);
+            const content = commentDiv.querySelector('.comment-content');
+            const textarea = commentDiv.querySelector('.edit-textarea');
+            const editBtn = commentDiv.querySelector('.edit-button');
+            const saveBtn = commentDiv.querySelector('.save-button');
+            const cancelBtn = commentDiv.querySelector('.cancel-button');
+
+            content.style.display = 'none';
+            textarea.style.display = 'block';
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+            textarea.focus();
+        }
+
+        // 수정 취소 함수
+        function cancelEdit(commentId) {
+            const commentDiv = document.getElementById(`comment-${commentId}`);
+            const content = commentDiv.querySelector('.comment-content');
+            const textarea = commentDiv.querySelector('.edit-textarea');
+            const editBtn = commentDiv.querySelector('.edit-button');
+            const saveBtn = commentDiv.querySelector('.save-button');
+            const cancelBtn = commentDiv.querySelector('.cancel-button');
+
+            content.style.display = 'block';
+            textarea.style.display = 'none';
+            editBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            textarea.value = content.textContent; // 원래 내용으로 되돌리기
+        }
+
+        // 댓글 수정 함수
+        async function updateComment(commentId) {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            const commentDiv = document.getElementById(`comment-${commentId}`);
+            const textarea = commentDiv.querySelector('.edit-textarea');
+            const content = textarea.value.trim();
+
+            if (!content) {
+                alert('댓글 내용을 입력해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3030/api/comments/${commentId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content })
+                });
+
+                if (response.ok) {
+                    loadComments(); // 댓글 목록 새로고침
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '댓글 수정에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('댓글 수정 중 오류가 발생했습니다.');
             }
         }
 

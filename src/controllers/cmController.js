@@ -59,17 +59,19 @@ export async function getComments(req, res) {
             nickname: true,
           },
         },
-        commentLike: true, // schema.prisma와 일치하는 필드명
+        commentLike: true,
       },
       orderBy: {
         createdAt: 'desc'
       }
     });
 
+    // 응답 데이터 형식화
     const formattedComments = comments.map(comment => ({
       commentId: comment.commentid,
       content: comment.content,
       nickname: comment.user.nickname,
+      userId: comment.userId,
       createdAt: comment.createdAt,
       likeCount: comment.commentLike.length,
     }));
@@ -78,8 +80,7 @@ export async function getComments(req, res) {
   } catch (error) {
     console.error('Error in getComments:', error);
     return res.status(500).json({ 
-      message: "댓글 조회 중 오류가 발생했습니다.",
-      error: error.message
+      message: "댓글 조회 중 오류가 발생했습니다."
     });
   }
 }

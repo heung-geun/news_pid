@@ -1,5 +1,6 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -186,6 +187,35 @@ router.get("/posts/popular", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "서버 오류가 발생했습니다."
+    });
+  }
+});
+
+router.get("/posts/my", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.user;
+
+    const myPosts = await prisma.post.findMany({
+      where: { 
+        userId: +userId 
+      },
+      select: {
+        postsid: true,
+        userId: true,
+        type: true,
+        title: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({ data: myPosts });
+  } catch (error) {
+    console.error('Error in getMyPosts:', error);
+    return res.status(500).json({ 
+      message: "내 게시글 조회 중 오류가 발생했습니다."
     });
   }
 });
