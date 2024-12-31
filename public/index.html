@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>메인 페이지</title>
+</head>
+<body>
+    <div id="userInfo"></div>
+    <button id="logoutBtn" style="display: none;" onclick="location.href='logout.html'">로그아웃</button>
+    <div id="loginOptions" style="display: none;">
+        <!-- 기존 로그인 버튼 -->
+        <button onclick="location.href='login.html'">일반 로그인</button>
+        <!-- 네이버 로그인 버튼 -->
+        <button onclick="location.href='social_login.html'">네이버 로그인</button>
+        <!-- 회원가입 버튼 -->
+        <button onclick="location.href='signup.html'">회원가입</button>
+    </div>
+
+    <script>
+        window.onload = async function() {
+            // userToken으로 통합 (네이버 토큰이나 일반 로그인 토큰)
+            const token = localStorage.getItem('userToken');
+            const userInfoDiv = document.getElementById('userInfo');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginOptions = document.getElementById('loginOptions');
+
+            if (token) {
+                try {
+                    // 토큰을 사용하여 사용자 정보 가져오기
+                    const response = await fetch('http://localhost:3030/api/me', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        userInfoDiv.innerHTML = `환영합니다, ${userData.data.nickname}님!`;
+                        logoutBtn.style.display = 'block';
+                        loginOptions.style.display = 'none';
+                    } else {
+                        // 토큰이 유효하지 않은 경우
+                        localStorage.removeItem('userToken');
+                        showLoginOptions();
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showLoginOptions();
+                }
+            } else {
+                showLoginOptions();
+            }
+        }
+
+        function showLoginOptions() {
+            const userInfoDiv = document.getElementById('userInfo');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginOptions = document.getElementById('loginOptions');
+
+            userInfoDiv.innerHTML = '로그인이 필요합니다.';
+            logoutBtn.style.display = 'none';
+            loginOptions.style.display = 'block';
+        }
+
+        function naverLogin() {
+            window.open('social_login_callback.html', 'naverLogin', 
+                'width=500,height=600,scrollbars=yes');
+        }
+    </script>
+</body>
+</html>
