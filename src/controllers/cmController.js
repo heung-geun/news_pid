@@ -3,32 +3,44 @@ import { prisma } from "../utils/prisma/index.js";
 // 댓글 작성
 export async function createComment(req, res) {
   try {
-    const postId = parseInt(req.params.postId);
     const { content } = req.body;
-    const userId = req.user.userId; // checkAuth 미들웨어에서 설정된 사용자 ID
+    const postId = parseInt(req.params.postId);
+    const userId = req.user.userId;
 
-    // 게시물 존재 여부 확인
-    const post = await prisma.post.findUnique({
-      where: { postsid: postId },
-    });
-    if (!post) {
-      return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+    // 입력값 검증
+    if (!content) {
+      return res.status(400).json({ message: "댓글 내용을 입력해주세요." });
     }
 
     // 댓글 생성
     const comment = await prisma.comment.create({
       data: {
-        postsid: postId,
-        userId,
         content,
+        userId,
+        postsid: postId,
+      },
+      include: {
+        user: {
+          select: {
+            nickname: true,
+          },
+        },
       },
     });
 
-    res.status(201).json(comment);
+    res.status(201).json({
+      message: "댓글이 작성되었습니다.",
+      data: {
+        commentId: comment.commentid,
+        content: comment.content,
+        nickname: comment.user.nickname,
+        createdAt: comment.createdAt,
+        likeCount: 0,
+      },
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "댓글 작성 중 오류가 발생했습니다.", error });
+    console.error('Error in createComment:', error);
+    res.status(500).json({ message: "댓글 작성 중 오류가 발생했습니다." });
   }
 }
 
@@ -37,16 +49,38 @@ export async function getComments(req, res) {
   try {
     const postId = parseInt(req.params.postId);
 
-    // 해당 게시물의 댓글 조회
     const comments = await prisma.comment.findMany({
-      where: { postsid: postId },
-      orderBy: { createdAt: "asc" }, // 작성시간 기준 정렬
+      where: { 
+        postsid: postId 
+      },
+      include: {
+        user: {
+          select: {
+            nickname: true,
+          },
+        },
+        commentLike: true, // schema.prisma와 일치하는 필드명
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
-    res.status(200).json(comments);
+
+    const formattedComments = comments.map(comment => ({
+      commentId: comment.commentid,
+      content: comment.content,
+      nickname: comment.user.nickname,
+      createdAt: comment.createdAt,
+      likeCount: comment.commentLike.length,
+    }));
+
+    return res.status(200).json({ data: formattedComments });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "댓글 조회 중 오류가 발생했습니다.", error });
+    console.error('Error in getComments:', error);
+    return res.status(500).json({ 
+      message: "댓글 조회 중 오류가 발생했습니다.",
+      error: error.message
+    });
   }
 }
 

@@ -259,4 +259,114 @@ router.get("/posts/:postId/likes", async (req, res) => {
   }
 });
 
+// 댓글 좋아요
+router.post("/comments/:commentId/like", authMiddleware, async (req, res) => {
+  const userId = req.user.userId;
+  const commentId = parseInt(req.params.commentId);
+
+  try {
+    // 댓글 존재 확인
+    const comment = await prisma.comment.findUnique({
+      where: { commentid: commentId },
+    });
+
+    if (!comment) {
+      return res.status(404).json({ message: "댓글을 찾을 수 없습니다." });
+    }
+
+    // 자신의 댓글에는 좋아요 불가
+    if (comment.userId === userId) {
+      return res.status(400).json({ message: "자신의 댓글에는 좋아요할 수 없습니다." });
+    }
+
+    // 이미 좋아요 했는지 확인
+    const existingLike = await prisma.commentLike.findUnique({
+      where: {
+        userId_commentid: {
+          userId: userId,
+          commentid: commentId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      return res.status(400).json({ message: "이미 좋아요한 댓글입니다." });
+    }
+
+    // 좋아요 생성
+    await prisma.commentLike.create({
+      data: {
+        userId: userId,
+        commentid: commentId,
+      },
+    });
+
+    res.status(200).json({ message: "댓글 좋아요 성공" });
+  } catch (error) {
+    console.error('Error in comment like:', error);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
+
+// 댓글 좋아요 취소
+router.delete("/comments/:commentId/like", authMiddleware, async (req, res) => {
+  const userId = req.user.userId;
+  const commentId = parseInt(req.params.commentId);
+
+  try {
+    // 좋아요 존재 확인
+    const like = await prisma.commentLike.findUnique({
+      where: {
+        userId_commentid: {
+          userId: userId,
+          commentid: commentId,
+        },
+      },
+    });
+
+    if (!like) {
+      return res.status(404).json({ message: "좋아요를 찾을 수 없습니다." });
+    }
+
+    // 좋아요 삭제
+    await prisma.commentLike.delete({
+      where: {
+        userId_commentid: {
+          userId: userId,
+          commentid: commentId,
+        },
+      },
+    });
+
+    res.status(200).json({ message: "댓글 좋아요 취소 성공" });
+  } catch (error) {
+    console.error('Error in comment unlike:', error);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
+
+// 댓글의 좋아요 상태 확인
+router.get("/comments/:commentId/like", authMiddleware, async (req, res) => {
+  const userId = req.user.userId;
+  const commentId = parseInt(req.params.commentId);
+
+  try {
+    const like = await prisma.commentLike.findUnique({
+      where: {
+        userId_commentid: {
+          userId: userId,
+          commentid: commentId,
+        },
+      },
+    });
+
+    res.status(200).json({
+      isLiked: !!like,
+    });
+  } catch (error) {
+    console.error('Error in get comment like status:', error);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
+
 export default router;
