@@ -12,11 +12,20 @@ const storage = multer.diskStorage({
         cb(null, 'uploads/') // 'uploads' 디렉토리에 파일 저장
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname)) // 파일명 중복 방지
+        cb(null, Date.now() + '-' + file.originalname) // 파일명 중복 방지
     }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('지원하지 않는 파일 형식입니다.'));
+        }
+    }
+});
 
 router.get("/posts/all", async (req, res) => {
   const posts = await prisma.post.findMany({
@@ -134,6 +143,7 @@ router.get("/posts/detail/:postsid", async (req, res) => {
                 type: true,
                 title: true,
                 content: true,
+                fileUrls: true,
                 createdAt: true,
             },
         });
@@ -262,6 +272,37 @@ router.patch("/me", authMiddleware, upload.single('profileImage'), async (req, r
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({ message: "프로필 수정 중 오류가 발생했습니다." });
+    }
+});
+
+// 게시글 작성 라우트 수정
+router.post("/posts", authMiddleware, upload.array('media', 5), async (req, res) => {
+    try {
+        const { userId } = req.user;
+        const { type, title, content } = req.body;
+
+        // 업로드된 파일들의 경로를 JSON 문자열로 저장
+        const fileUrls = req.files ? JSON.stringify(req.files.map(file => `/uploads/${file.filename}`)) : null;
+
+        const post = await prisma.post.create({
+            data: {
+                userId: +userId,
+                type,
+                title,
+                content,
+                fileUrls // String 타입으로 저장
+            }
+        });
+
+        return res.status(201).json({
+            message: "게시글을 생성하였습니다.",
+            data: post,
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({
+            message: "게시글 작성 중 오류가 발생했습니다."
+        });
     }
 });
 
