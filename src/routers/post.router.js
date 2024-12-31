@@ -166,7 +166,7 @@ router.get("/posts/popular", async (req, res) => {
 
     // 좋아요가 10개 이상인 게시글만 필터링하고 포맷팅
     const popularPosts = posts
-      .filter(post => post.postLike.length >= 1)
+      .filter(post => post.postLike.length >= 9)
       .map(post => ({
         postsid: post.postsid,
         userId: post.userId,
