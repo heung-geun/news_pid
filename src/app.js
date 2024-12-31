@@ -15,26 +15,30 @@ const PORT = 3030;
 // 정적 파일 제공
 app.use(express.static(path.join(process.cwd(), "public")));
 
+// 정적 파일 제공 설정
+app.use('/uploads', express.static('uploads'));
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(process.cwd(), "public", "index.html"));
 });
 
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:3030"], // 두 도메인 모두 허용
+    origin: ["http://127.0.0.1:5500", "http://localhost:3030"],
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
-  }),
+  })
 );
 
 app.use(
   session({
-    secret: process.env.SESSEION_KEY, // 비밀 키
+    secret: process.env.SESSEION_KEY,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // HTTPS를 사용할 경우 true로 설정
-  }),
+    cookie: { secure: false },
+  })
 );
+
 app.use(express.json());
 
 app.use("/api", [

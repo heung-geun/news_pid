@@ -39,6 +39,7 @@ model Post {
   type      String
   title     String
   content   String
+  fileUrls  String?
   createdAt DateTime @default(now())
   changedAt DateTime @updatedAt
 
