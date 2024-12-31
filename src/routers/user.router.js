@@ -192,6 +192,7 @@ router.get("/me", authMiddleware, async (req, res, next) => {
       interest: true,
       introduce: true,
       age: true,
+      profileimage: true,
     },
   });
   return res.status(200).json({ data: userInfo });

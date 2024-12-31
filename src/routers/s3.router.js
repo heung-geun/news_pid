@@ -1,8 +1,9 @@
 import aws from "@aws-sdk/client-s3";
 import multer from "multer";
 import multerS3 from "multer-s3";
-import path from "path";
 import express from "express";
+import { prisma } from "../utils/prisma/index.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -27,9 +28,24 @@ const uploadImage = multer({
   }),
 });
 
-// POST 요청에 대한 라우트 설정
-router.post("/picture", uploadImage.single("image"), (req, res) => {
-  res.status(200).json({ message: "사진 업로드 완료" });
-});
+router.post(
+  "/image",
+  authMiddleware,
+  uploadImage.single("image"),
+  async (req, res) => {
+    const { userId } = req.user;
+    if (!req.file) {
+      return res.status(400).json({ message: "파일 업로드 실패" });
+    }
+    const filePath = req.file.location; //업로드 이미지 경로
+    console.log(filePath);
+
+    await prisma.user.update({
+      where: { userId: +userId },
+      data: { profileimage: filePath },
+    });
+    res.status(200).json({ message: "프로필 사진 업로드 완료", filePath });
+  },
+);
 
 export default router;
