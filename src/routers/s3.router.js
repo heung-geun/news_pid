@@ -24,7 +24,9 @@ const upload = multer({
         acl: 'public-read',
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: function (req, file, cb) {
-            cb(null, `uploads/${Date.now()}-${file.originalname}`);
+            // 용도에 따라 다른 폴더에 저장
+            const folder = req.body.type || 'misc'; // 'posts', 'profiles', 'comments' 등
+            cb(null, `${folder}/${Date.now()}-${file.originalname}`);
         }
     }),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB
