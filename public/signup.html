@@ -7,22 +7,44 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            background-color: #f5f5f5;
+            padding: 20px;
         }
         .signup-form {
-            width: 300px;
+            width: 400px;
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .form-group {
             margin-bottom: 15px;
+        }
+        .email-group {
+            display: flex;
+            gap: 10px;
+        }
+        .email-group input {
+            flex: 2;
+        }
+        .email-group button {
+            flex: 1;
+            padding: 8px;
+            background-color: #2196F3;
+        }
+        .verification-group {
+            display: none;
+            margin-top: 10px;
         }
         input {
             width: 100%;
             padding: 8px;
             margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         button {
             width: 100%;
@@ -33,6 +55,37 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .error-message {
+            color: #ff4444;
+            margin-top: 10px;
+            display: none;
+        }
+        .success-message {
+            color: #4CAF50;
+            margin-top: 10px;
+            display: none;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 80px;
+        }
     </style>
 </head>
 <body>
@@ -40,7 +93,14 @@
         <h2>회원가입</h2>
         <div class="form-group">
             <label for="email">이메일:</label>
-            <input type="email" id="email" required>
+            <div class="email-group">
+                <input type="email" id="email" required>
+                <button onclick="sendVerification()">인증번호</button>
+            </div>
+            <div id="verificationGroup" class="verification-group">
+                <input type="text" id="verificationCode" placeholder="인증번호 6자리 입력" maxlength="6">
+                <button onclick="verifyCode()" style="margin-top: 5px;">확인</button>
+            </div>
         </div>
         <div class="form-group">
             <label for="password">비밀번호:</label>
@@ -55,35 +115,146 @@
             <input type="text" id="nickname" required>
         </div>
         <div class="form-group">
-            <label for="name">이름:</label>
-            <input type="text" id="name" required>
+            <label for="gameType">선호하는 게임:</label>
+            <select id="gameType" required>
+                <option value="">선택해주세요</option>
+                <option value="lol">LOL</option>
+                <option value="lost_ark">로스트아크</option>
+                <option value="maplestory">메이플스토리</option>
+                <option value="valorant">발로란트</option>
+                <option value="etc">기타</option>
+            </select>
         </div>
         <div class="form-group">
-            <label for="age">나이:</label>
-            <input type="number" id="age" required>
+            <label for="introduction">하고 싶은 한마디:</label>
+            <textarea id="introduction" rows="3" placeholder="자기소개나 하고 싶은 말을 적어주세요"></textarea>
         </div>
-        <div class="form-group">
-            <label for="interest">관심사:</label>
-            <input type="text" id="interest">
-        </div>
-        <div class="form-group">
-            <label for="introduce">자기소개:</label>
-            <textarea id="introduce" rows="3" style="width: 100%"></textarea>
-        </div>
-        <button onclick="signup()">가입하기</button>
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+        <button onclick="signup()" id="signupButton" disabled>회원가입</button>
+        <button onclick="location.href='login.html'" style="background-color: #2196F3; margin-top: 10px;">로그인하기</button>
         <button onclick="location.href='index.html'" style="background-color: #666; margin-top: 10px;">취소</button>
     </div>
 
     <script>
+        let isEmailVerified = false;
+
+        async function sendVerification() {
+            const email = document.getElementById('email').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const verificationGroup = document.getElementById('verificationGroup');
+
+            if (!email) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 이메일을 입력해주세요.';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3030/api/emailauth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMessage.style.display = 'block';
+                    successMessage.textContent = '📧 인증번호가 전송되었습니다.';
+                    verificationGroup.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = '❌ ' + (data.message || '인증번호 전송에 실패했습니다.');
+                    successMessage.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 서버 오류가 발생했습니다.';
+                successMessage.style.display = 'none';
+            }
+        }
+
+        async function verifyCode() {
+            const code = parseInt(document.getElementById('verificationCode').value);
+            const email = document.getElementById('email').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const signupButton = document.getElementById('signupButton');
+
+            if (!code || isNaN(code)) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 올바른 인증번호를 입력해주세요.';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3030/api/checkemail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email: email,
+                        authCode: code
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    isEmailVerified = true;
+                    successMessage.style.display = 'block';
+                    successMessage.textContent = '✅ 이메일 인증이 완료되었습니다!';
+                    errorMessage.style.display = 'none';
+                    signupButton.disabled = false;
+                    
+                    // 인증 완료 시 입력 필드 비활성화
+                    document.querySelector('.email-group button').disabled = true;
+                    document.querySelector('.email-group button').style.backgroundColor = '#cccccc';
+                    document.getElementById('email').disabled = true;
+                    document.getElementById('verificationCode').disabled = true;
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = '❌ ' + (data.message || '인증번호가 일치하지 않습니다.');
+                    successMessage.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '❌ 서버 오류가 발생했습니다.';
+                successMessage.style.display = 'none';
+            }
+        }
+
         async function signup() {
+            if (!isEmailVerified) {
+                alert('이메일 인증이 필요합니다.');
+                return;
+            }
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const passwordCheck = document.getElementById('passwordCheck').value;
             const nickname = document.getElementById('nickname').value;
-            const name = document.getElementById('name').value;
-            const age = document.getElementById('age').value;
-            const interest = document.getElementById('interest').value;
-            const introduce = document.getElementById('introduce').value;
+            const gameType = document.getElementById('gameType').value;
+            const introduction = document.getElementById('introduction').value;
+
+            // 입력값 검증
+            if (!email || !password || !nickname || !gameType) {
+                alert('필수 항목을 모두 입력해주세요.');
+                return;
+            }
+
+            if (password !== passwordCheck) {
+                alert('비밀번호가 일치하지 않습니다.');
+                return;
+            }
 
             try {
                 const response = await fetch('http://localhost:3030/api/users', {
@@ -94,12 +265,10 @@
                     body: JSON.stringify({
                         email,
                         password,
-                        passwordCheck,
                         nickname,
-                        name,
-                        age,
-                        interest,
-                        introduce
+                        gameType,
+                        introduction: introduction || null,  // 빈 문자열이면 null로 설정
+                        emailVerified: true
                     })
                 });
 
@@ -107,9 +276,9 @@
 
                 if (response.ok) {
                     alert('회원가입이 완료되었습니다!');
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                 } else {
-                    alert(data.errorMessage || '회원가입에 실패했습니다.');
+                    alert(data.message || '회원가입에 실패했습니다.');
                 }
             } catch (error) {
                 console.error('Error:', error);
