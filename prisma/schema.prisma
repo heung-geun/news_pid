@@ -14,18 +14,18 @@ datasource db {
 }
 
 model User {
-  userId    Int     @id @default(autoincrement())
-  name      String
-  age       Int
-  email     String  @unique
-  password  String
-  nickname  String  @unique
-  interest  String?
-  introduce String?
-  provider  String?
+  userId       Int     @id @default(autoincrement())
+  name         String
+  age          Int
+  email        String  @unique
+  password     String
+  nickname     String  @unique
+  interest     String?
+  introduce    String?
+  provider     String?
   profileimage String?
 
-  post        Post[]     // 유저가 작성한 게시글 관계
+  post        Post[] // 유저가 작성한 게시글 관계
   comment     Comment[]
   postLike    postLike[] // 게시글의 좋아요 관계
   commentLike commentLike[]
