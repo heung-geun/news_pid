@@ -1,54 +1,64 @@
 <!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <title>네이버 로그인</title>
-  <script type="text/javascript" src="https://static.nid.naver.com/js/naverLogin_implicit-1.0.3.js" charset="utf-8"></script>
-  <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f5f6f7;
-    }
-    .login-container {
-      text-align: center;
-      padding: 20px;
-      background: white;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <h2>네이버 로그인</h2>
-    <!-- 네이버 로그인 버튼 노출 영역 -->
-    <div id="naver_id_login"></div>
-    <button onclick="location.href='index.html'" style="margin-top: 20px;">메인으로 돌아가기</button>
-  </div>
+  <head>
+    <meta charset="utf-8" />
+    <title>네이버 로그인</title>
+    <script
+      type="text/javascript"
+      src="https://static.nid.naver.com/js/naverLogin_implicit-1.0.3.js"
+      charset="utf-8"
+    ></script>
+    <script
+      type="text/javascript"
+      src="http://code.jquery.com/jquery-1.11.3.min.js"
+    ></script>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f5f6f7;
+      }
+      .login-container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <h2>네이버 로그인</h2>
+      <!-- 네이버 로그인 버튼 노출 영역 -->
+      <div id="naver_id_login"></div>
+      <button onclick="location.href='main.html'" style="margin-top: 20px">
+        메인으로 돌아가기
+      </button>
+    </div>
 
-  <script type="text/javascript">
-    var naver_id_login = new naver_id_login("ejbbVfKdrQPVFf76Ju6O", "http://localhost:3030/social_login_callback.html");
-    var state = naver_id_login.getUniqState();
-    
-    naver_id_login.setButton("white", 2, 40);
-    naver_id_login.setDomain("http://localhost:3030");
-    naver_id_login.setState(state);
-    naver_id_login.setPopup();
-    
-    // 필수적으로 받아야 하는 정보들에 대한 동의 요청
-    naver_id_login.init_naver_id_login();
-    
-    // 접근 타입을 force로 설정하여 매번 동의 화면이 표시되도록 함
-    var url = naver_id_login.getNaverIdLoginLink();
-    url += "&auth_type=reprompt";
-    document.getElementById('naver_id_login').children[0].href = url;
-  </script>
-</body>
+    <script type="text/javascript">
+      var naver_id_login = new naver_id_login(
+        "ejbbVfKdrQPVFf76Ju6O",
+        "http://localhost:3030/social_login_callback.html",
+      );
+      var state = naver_id_login.getUniqState();
+
+      naver_id_login.setButton("white", 2, 40);
+      naver_id_login.setDomain("http://localhost:3030");
+      naver_id_login.setState(state);
+      naver_id_login.setPopup();
+
+      // 필수적으로 받아야 하는 정보들에 대한 동의 요청
+      naver_id_login.init_naver_id_login();
+
+      // 접근 타입을 force로 설정하여 매번 동의 화면이 표시되도록 함
+      var url = naver_id_login.getNaverIdLoginLink();
+      url += "&auth_type=reprompt";
+      document.getElementById("naver_id_login").children[0].href = url;
+    </script>
+  </body>
 </html>
-
-

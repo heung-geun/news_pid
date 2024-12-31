@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>오X오조 뉴스 피드</title>
+    <style>
+      .main {
+        margin: 50px;
+      }
+      .postLinks {
+        margin-right: 50px;
+      }
+      .dropdown {
+        margin-right: 100px;
+      }
+      .buttons {
+        margin-left: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <nav>
+        <ul>
+          <li><strong>오X오조 뉴스 피드</strong></li>
+        </ul>
+        <ul>
+          <li class="postLinks"><a href="#">인기글</a></li>
+          <details class="dropdown">
+            <summary>게시글</summary>
+            <ul>
+              <li><a href="main.html">전체</a></li>
+              <li>
+                <a href="type.lol.html">리그 오브 레전드</a>
+              </li>
+              <li>
+                <a href="type.lost_ark.html">로스트 아크</a>
+              </li>
+              <li>
+                <a href="type.maplestory.html">메이플 스토리</a>
+              </li>
+              <li>
+                <a href="type.balorant.html">발로란트</a>
+              </li>
+              <li><a href="type.etc.html">기타</a></li>
+            </ul>
+          </details>
+          <button class="buttons" onclick="location.href='login.html'">
+            로그인하기
+          </button>
+        </ul>
+      </nav>
+    </div>
+    <div></div>
+  </body>
+</html>

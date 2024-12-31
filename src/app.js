@@ -16,12 +16,12 @@ const PORT = 3030;
 app.use(express.static(path.join(process.cwd(), "public")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "index.html"));
+  res.sendFile(path.join(process.cwd(), "public", "main.html"));
 });
 
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:3030"], // 두 도메인 모두 허용
+    origin: "http://127.0.0.1:5500", // 클라이언트 URL
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   }),

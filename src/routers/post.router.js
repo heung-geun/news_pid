@@ -68,7 +68,7 @@ router.get("/posts/maplestory", async (req, res) => {
   return res.status(200).json({ data: postsMaplestory });
 });
 
-router.get("/posts/maplestory", async (req, res) => {
+router.get("/posts/balorant", async (req, res) => {
   const postsBalorant = await prisma.post.findMany({
     where: { type: "발로란트" },
     select: {

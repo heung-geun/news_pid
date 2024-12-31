@@ -15,55 +15,58 @@
     <script type="text/javascript">
       var naver_id_login = new naver_id_login(
         "ejbbVfKdrQPVFf76Ju6O",
-        "http://localhost:3030/social_login_callback.html"
+        "http://localhost:3030/social_login_callback.html",
       );
-      
+
       if (naver_id_login.oauthParams.access_token) {
         const token = naver_id_login.oauthParams.access_token;
-        
+
         // 네이버 사용자 프로필 조회
         naver_id_login.get_naver_userprofile("naverSignInCallback()");
       }
-      
+
       async function naverSignInCallback() {
         const email = naver_id_login.getProfileData("email");
         const nickname = naver_id_login.getProfileData("nickname");
         const name = naver_id_login.getProfileData("name");
-        
+
         try {
           // 서버에 소셜 로그인 정보 전송
-          const response = await fetch('http://localhost:3030/api/social/auth', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          const response = await fetch(
+            "http://localhost:3030/api/social/auth",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                nickname,
+                name,
+                provider: "naver",
+              }),
             },
-            body: JSON.stringify({
-              email,
-              nickname,
-              name,
-              provider: 'naver'
-            })
-          });
+          );
 
           const data = await response.json();
-          
+
           if (response.ok) {
             // 서버에서 받은 토큰 저장
-            localStorage.setItem('userToken', data.token);
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userNickname', nickname);
-            
+            localStorage.setItem("userToken", data.token);
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("userNickname", nickname);
+
             // 부모 창의 위치를 index.html로 변경
-            window.opener.location.href = '/index.html';
+            window.opener.location.href = "/main.html";
             // 현재 팝업 창 닫기
             window.close();
           } else {
-            alert('로그인 실패: ' + data.message);
+            alert("로그인 실패: " + data.message);
             window.close();
           }
         } catch (error) {
-          console.error('Error:', error);
-          alert('로그인 처리 중 오류가 발생했습니다.');
+          console.error("Error:", error);
+          alert("로그인 처리 중 오류가 발생했습니다.");
           window.close();
         }
       }
