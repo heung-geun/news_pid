@@ -3,21 +3,25 @@ import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import multer from 'multer';
 import path from 'path';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const router = express.Router();
 
-// 이미지 저장을 위한 multer 설정
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/') // 'uploads' 디렉토리에 파일 저장
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname) // 파일명 중복 방지
+// S3 클라이언트 설정
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_KEY
     }
 });
 
+// multer 설정 변경 (메모리에 임시 저장)
 const upload = multer({ 
-    storage: storage,
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB 제한
+    },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
             cb(null, true);
@@ -275,14 +279,37 @@ router.patch("/me", authMiddleware, upload.single('profileImage'), async (req, r
     }
 });
 
-// 게시글 작성 라우트 수정
+// 게시글 작성 라우트
 router.post("/posts", authMiddleware, upload.array('media', 5), async (req, res) => {
     try {
         const { userId } = req.user;
         const { type, title, content } = req.body;
 
-        // 업로드된 파일들의 경로를 JSON 문자열로 저장
-        const fileUrls = req.files ? JSON.stringify(req.files.map(file => `/uploads/${file.filename}`)) : null;
+        console.log('Uploading files:', req.files); // 디버깅용 로그
+
+        // S3에 파일 업로드하고 URL 배열 생성
+        const fileUrls = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                try {
+                    const key = `posts/${userId}-${Date.now()}-${file.originalname}`;
+                    const command = new PutObjectCommand({
+                        Bucket: process.env.AWS_BUCKET_NAME,
+                        Key: key,
+                        Body: file.buffer,
+                        ContentType: file.mimetype,
+                        ACL: 'public-read'
+                    });
+
+                    await s3.send(command);
+                    fileUrls.push(`${process.env.AWS_BUCKET_URL}/${key}`);
+                    console.log('File uploaded successfully:', key); // 디버깅용 로그
+                } catch (uploadError) {
+                    console.error('File upload error:', uploadError); // 디버깅용 로그
+                    throw uploadError;
+                }
+            }
+        }
 
         const post = await prisma.post.create({
             data: {
@@ -290,7 +317,7 @@ router.post("/posts", authMiddleware, upload.array('media', 5), async (req, res)
                 type,
                 title,
                 content,
-                fileUrls // String 타입으로 저장
+                fileUrls: fileUrls.length > 0 ? JSON.stringify(fileUrls) : null
             }
         });
 
@@ -299,9 +326,10 @@ router.post("/posts", authMiddleware, upload.array('media', 5), async (req, res)
             data: post,
         });
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Detailed error:', error); // 자세한 에러 로그
         return res.status(500).json({
-            message: "게시글 작성 중 오류가 발생했습니다."
+            message: "게시글 작성 중 오류가 발생했습니다.",
+            error: error.message // 클라이언트에 에러 메시지 전달
         });
     }
 });

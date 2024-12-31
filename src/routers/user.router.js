@@ -8,6 +8,7 @@ import generateRandomNumber from "../utils/randomnumber.js";
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const router = express.Router();
 
@@ -16,17 +17,22 @@ if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
-// 이미지 저장을 위한 multer 설정
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
+// S3 클라이언트 설정
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_KEY
     }
 });
 
-const upload = multer({ storage: storage });
+// multer 설정 변경 (메모리에 임시 저장)
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB 제한
+    }
+});
 
 // GET /api/users 요청 처리
 router.get("/users", (req, res) => {
@@ -406,8 +412,19 @@ router.patch("/users/me", authMiddleware, upload.single('profileImage'), async (
             introduce
         };
 
+        // 이미지가 업로드된 경우 S3에 저장
         if (req.file) {
-            updateData.profileimage = `/uploads/${req.file.filename}`;
+            const key = `profiles/${userId}-${Date.now()}-${req.file.originalname}`;
+            const command = new PutObjectCommand({
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Key: key,
+                Body: req.file.buffer,
+                ContentType: req.file.mimetype,
+                ACL: 'public-read'
+            });
+
+            await s3.send(command);
+            updateData.profileimage = `${process.env.AWS_BUCKET_URL}/${key}`;
         }
 
         const updatedUser = await prisma.user.update({
