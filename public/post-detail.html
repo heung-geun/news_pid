@@ -61,6 +61,25 @@
             background-color: #666;
             color: white;
         }
+        .like-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .like-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .like-button.active {
+            background-color: #ff4444;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -71,12 +90,65 @@
             <div class="post-info" id="postInfo"></div>
         </div>
         <div class="post-content" id="postContent"></div>
+        <div class="like-container">
+            <button id="likeButton" onclick="toggleLike()" class="like-button">
+                ❤️ <span id="likeCount">0</span>
+            </button>
+        </div>
         <div class="button-container">
             <button class="back-button" onclick="location.href='index.html'">목록으로</button>
         </div>
     </div>
 
     <script>
+        let isLiked = false;
+
+        async function toggleLike() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const postsid = urlParams.get('id');
+
+            try {
+                const method = isLiked ? 'DELETE' : 'POST';
+                const response = await fetch(`http://localhost:3030/api/posts/${postsid}/likes`, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const likeButton = document.getElementById('likeButton');
+                    isLiked = !isLiked;
+                    
+                    if (isLiked) {
+                        likeButton.classList.add('active');
+                    } else {
+                        likeButton.classList.remove('active');
+                    }
+                    
+                    // 좋아요 개수 업데이트
+                    const likesResponse = await fetch(`http://localhost:3030/api/posts/${postsid}/likes`);
+                    if (likesResponse.ok) {
+                        const likesData = await likesResponse.json();
+                        document.getElementById('likeCount').textContent = likesData.data.length;
+                    }
+                } else {
+                    alert(data.message || '좋아요 처리 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('좋아요 처리 중 오류가 발생했습니다.');
+            }
+        }
+
         window.onload = async function() {
             const urlParams = new URLSearchParams(window.location.search);
             const postsid = urlParams.get('id');
@@ -88,6 +160,7 @@
             }
 
             try {
+                // 게시글 정보 로드
                 const response = await fetch(`http://localhost:3030/api/posts/detail/${postsid}`);
                 const data = await response.json();
 
@@ -98,6 +171,32 @@
                     document.getElementById('postInfo').textContent = 
                         `작성일: ${new Date(post.createdAt).toLocaleString()}`;
                     document.getElementById('postContent').textContent = post.content;
+
+                    // 좋아요 상태 확인
+                    const token = localStorage.getItem('userToken');
+                    if (token) {
+                        try {
+                            const likeResponse = await fetch(`http://localhost:3030/api/posts/${postsid}/likes`);
+                            const likeData = await likeResponse.json();
+                            
+                            if (likeResponse.ok) {
+                                const likeButton = document.getElementById('likeButton');
+                                
+                                // 현재 사용자의 좋아요 여부 확인
+                                const currentUserId = JSON.parse(atob(token.split('.')[1])).userId;
+                                isLiked = likeData.data.some(like => like.userId === currentUserId);
+                                
+                                if (isLiked) {
+                                    likeButton.classList.add('active');
+                                }
+                                
+                                // 전체 좋아요 수 표시
+                                document.getElementById('likeCount').textContent = likeData.data.length;
+                            }
+                        } catch (error) {
+                            console.error('좋아요 상태 확인 중 오류:', error);
+                        }
+                    }
                 } else {
                     alert('게시글을 불러올 수 없습니다.');
                     location.href = 'index.html';

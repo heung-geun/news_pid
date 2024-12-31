@@ -143,4 +143,51 @@ router.get("/posts/detail/:postsid", async (req, res) => {
     }
 });
 
+router.get("/posts/popular", async (req, res) => {
+  try {
+    // 먼저 모든 게시글과 좋아요 수를 가져옴
+    const posts = await prisma.post.findMany({
+      select: {
+        postsid: true,
+        userId: true,
+        type: true,
+        title: true,
+        createdAt: true,
+        postLike: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // 좋아요가 10개 이상인 게시글만 필터링하고 포맷팅
+    const popularPosts = posts
+      .filter(post => post.postLike.length >= 1)
+      .map(post => ({
+        postsid: post.postsid,
+        userId: post.userId,
+        type: post.type,
+        title: post.title,
+        createdAt: post.createdAt,
+        likeCount: post.postLike.length
+      }))
+      .sort((a, b) => b.likeCount - a.likeCount); // 좋아요 수 기준 내림차순 정렬
+
+    return res.status(200).json({
+      success: true,
+      data: popularPosts
+    });
+  } catch (error) {
+    console.error('Popular posts error:', error);
+    return res.status(500).json({
+      success: false,
+      message: "서버 오류가 발생했습니다."
+    });
+  }
+});
+
 export default router;

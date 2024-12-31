@@ -229,4 +229,34 @@ router.delete(
   },
 );
 
+// 게시글의 좋아요 상태와 개수 확인
+router.get("/posts/:postId/likes", async (req, res) => {
+  const postId = parseInt(req.params.postId);
+
+  try {
+    const likes = await prisma.postLike.findMany({
+      where: { postsid: postId },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            nickname: true
+          }
+        }
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: likes
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "서버 오류가 발생했습니다."
+    });
+  }
+});
+
 export default router;

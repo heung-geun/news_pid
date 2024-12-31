@@ -35,6 +35,10 @@
             background-color: #2196F3;
             color: white;
         }
+        .popular-button {
+            background-color: #ff4444;
+            color: white;
+        }
         
         /* 게시글 목록 스타일 */
         .posts-container {
@@ -80,6 +84,7 @@
         <div id="loggedInButtons" style="display: none;">
             <button class="main-button" onclick="location.href='index.html'">메인화면</button>
             <button class="post-button" onclick="location.href='create-post.html'">게시글 작성</button>
+            <button class="popular-button" onclick="location.href='popular-posts.html'">인기 게시글</button>
             <button class="logout-button" onclick="location.href='logout.html'">로그아웃</button>
         </div>
         <div id="loginOptions" style="display: none;">
@@ -176,11 +181,13 @@
                         loggedInButtons.style.display = 'block';
                         loginOptions.style.display = 'none';
                     } else {
-                        localStorage.removeItem('userToken');
+                        // 토큰이 유효하지 않거나 만료된 경우
+                        localStorage.removeItem('userToken'); // 토큰 제거
                         showLoginOptions();
                     }
                 } catch (error) {
                     console.error('Error:', error);
+                    localStorage.removeItem('userToken'); // 에러 발생 시 토큰 제거
                     showLoginOptions();
                 }
             } else {
