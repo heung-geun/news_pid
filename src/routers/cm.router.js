@@ -1,12 +1,13 @@
-const express = require("express");
-const router = express.Router();
-const { checkAuth } = require("../middleware/authMiddleware");
-const {
+import express from "express";
+import checkAuth from "../middlewares/auth.middleware.js";
+import {
   createComment,
   getComments,
   updateComment,
   deleteComment,
-} = require("../controllers/commentController");
+} from "../controllers/cmController.js";
+
+const router = express.Router();
 
 // 댓글 작성
 router.post("/posts/:postId/comments", checkAuth, createComment);
@@ -15,9 +16,9 @@ router.post("/posts/:postId/comments", checkAuth, createComment);
 router.get("/posts/:postId/comments", getComments);
 
 // 댓글 수정
-router.put("/comments/:commentId", checkAuth, updateComment);
+router.patch("/comments/:commentId", checkAuth, updateComment);
 
 // 댓글 삭제
 router.delete("/comments/:commentId", checkAuth, deleteComment);
 
-module.exports = router;
+export default router;

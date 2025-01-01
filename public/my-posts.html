@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>내 게시글</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f6f7;
+        }
+        .posts-container {
+            width: 80%;
+            max-width: 1000px;
+            margin-top: 20px;
+        }
+        .posts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .posts-table th, .posts-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .posts-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .posts-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .edit-button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .edit-button:hover {
+            background-color: #45a049;
+        }
+        .no-posts {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .button-container {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        .main-button {
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .main-button:hover {
+            background-color: #1976D2;
+        }
+        .delete-button {
+            background-color: #ff4444;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>내 게시글 목록</h1>
+    <div class="button-container">
+        <button class="main-button" onclick="location.href='index.html'">메인화면으로</button>
+    </div>
+    <div class="posts-container">
+        <table class="posts-table">
+            <thead>
+                <tr>
+                    <th>유형</th>
+                    <th>제목</th>
+                    <th>작성일</th>
+                    <th>수정</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody id="postsTableBody">
+                <!-- 게시글이 여기에 동적으로 추가됩니다 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadMyPosts() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3030/api/posts/my', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const tableBody = document.getElementById('postsTableBody');
+                    tableBody.innerHTML = '';
+
+                    if (data.data.length === 0) {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="no-posts">작성한 게시글이 없습니다.</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    data.data.forEach(post => {
+                        const row = document.createElement('tr');
+                        const date = new Date(post.createdAt).toLocaleDateString();
+                        
+                        row.innerHTML = `
+                            <td>${post.type}</td>
+                            <td><a href="post-detail.html?id=${post.postsid}" style="text-decoration: none; color: inherit;">${post.title}</a></td>
+                            <td>${date}</td>
+                            <td><button class="edit-button" onclick="location.href='edit-post.html?id=${post.postsid}'">수정</button></td>
+                            <td><button class="delete-button" onclick="deletePost(${post.postsid})">삭제</button></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            const token = localStorage.getItem('userToken');
+            try {
+                const response = await fetch(`http://localhost:3030/api/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('게시글이 삭제되었습니다.');
+                    loadMyPosts(); // 목록 새로고침
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '게시글 삭제에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게시글 삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 페이지 로드 시 게시글 목록 불러오기
+        window.addEventListener('load', loadMyPosts);
+    </script>
+</body>
+</html> 
