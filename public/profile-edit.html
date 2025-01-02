@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>프로필 수정</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .profile-container {
+            width: 80%;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .profile-image-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-image-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .submit-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h1>프로필 수정</h1>
+        <form class="profile-form" id="profileForm">
+            <div class="profile-image-container">
+                <img id="profilePreview" class="profile-image-preview" 
+                     src="data:image/png;base64,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" 
+                     alt="프로필 이미지">
+                <input type="file" id="profileImage" accept="image/*" onchange="previewImage(event)">
+            </div>
+
+            <div class="form-group">
+                <label for="nickname">닉네임</label>
+                <input type="text" id="nickname" name="nickname" required>
+            </div>
+
+            <div class="form-group">
+                <label for="age">나이</label>
+                <input type="number" id="age" name="age" required min="1">
+            </div>
+
+            <div class="form-group">
+                <label for="interest">관심사</label>
+                <input type="text" id="interest" name="interest">
+            </div>
+
+            <div class="form-group">
+                <label for="introduce">자기소개</label>
+                <textarea id="introduce" name="introduce"></textarea>
+            </div>
+
+            <button type="submit" class="submit-button">저장하기</button>
+        </form>
+    </div>
+
+    <script>
+        // 이미지 미리보기 함수
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profilePreview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 이미지 input에 change 이벤트 리스너 추가
+        document.getElementById('profileImage').addEventListener('change', previewImage);
+
+        // 현재 프로필 정보 불러오기
+        async function loadProfile() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3030/api/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('nickname').value = data.data.nickname || '';
+                    document.getElementById('age').value = data.data.age || '';
+                    document.getElementById('interest').value = data.data.interest || '';
+                    document.getElementById('introduce').value = data.data.introduce || '';
+                    if (data.data.profileimage) {
+                        document.getElementById('profilePreview').src = data.data.profileimage;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('프로필 정보를 불러오는데 실패했습니다.');
+            }
+        }
+
+        // 프로필 수정 제출
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('nickname', document.getElementById('nickname').value);
+            formData.append('age', document.getElementById('age').value);
+            formData.append('interest', document.getElementById('interest').value);
+            formData.append('introduce', document.getElementById('introduce').value);
+
+            const imageFile = document.getElementById('profileImage').files[0];
+            if (imageFile) {
+                formData.append('profileImage', imageFile);
+            }
+
+            try {
+                const response = await fetch('http://localhost:3030/api/users/me', {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData // Content-Type 헤더는 자동으로 설정됨
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('프로필이 성공적으로 수정되었습니다.');
+                    window.location.href = 'index.html';
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '프로필 수정에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('프로필 수정 중 오류가 발생했습니다.');
+            }
+        });
+
+        // 페이지 로드 시 프로필 정보 불러오기
+        window.addEventListener('load', loadProfile);
+    </script>
+</body>
+</html> 

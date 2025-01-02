@@ -1,0 +1,446 @@
+<!doctype html>
+<html>
+  <head>
+    <title>게시글 상세</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background-color: #F5F6F7;
+      }
+      .post-container {
+        width: 80%;
+        max-width: 800px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .post-header {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+      }
+      .post-type {
+        display: inline-block;
+        padding: 5px 10px;
+        background-color: #2196F3;
+        color: white;
+        border-radius: 3px;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+      .post-title {
+        font-size: 24px;
+        margin: 10px 0;
+      }
+      .post-info {
+        color: #666;
+        font-size: 14px;
+      }
+      .post-content {
+        line-height: 1.6;
+        margin: 20px 0;
+        white-space: pre-wrap;
+      }
+      .media-container {
+        margin: 20px 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+      }
+      .media-item {
+        width: 100%;
+        max-height: 300px;
+        object-fit: contain;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .media-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+      }
+      .modal-content {
+        max-width: 90%;
+        max-height: 90%;
+        margin: auto;
+      }
+      .comment-section {
+        margin-top: 30px;
+        border-top: 1px solid #ddd;
+        padding-top: 20px;
+      }
+      .comment-form {
+        margin-bottom: 20px;
+      }
+      .comment-form textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+      }
+      .comment-form button {
+        padding: 8px 16px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .comment-form button:hover {
+        background-color: #1976D2;
+      }
+      .comment-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 10px;
+      }
+      .comment-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .comment-author {
+        font-weight: bold;
+        color: #333;
+      }
+      .comment-date {
+        color: #666;
+        font-size: 0.9em;
+      }
+      .comment-content {
+        color: #444;
+        line-height: 1.4;
+      }
+      .post-actions {
+        margin: 20px 0;
+        text-align: right;
+      }
+      #likeButton {
+        padding: 8px 16px;
+        background: none;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      #likeButton:hover {
+        background-color: #f0f0f0;
+      }
+      .delete-btn {
+        padding: 4px 8px;
+        background-color: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8em;
+        margin-left: 10px;
+      }
+      .delete-btn:hover {
+        background-color: #cc0000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="post-container">
+      <div class="post-header">
+        <div class="post-type" id="postType"></div>
+        <h1 class="post-title" id="postTitle"></h1>
+        <div class="post-info" id="postInfo"></div>
+      </div>
+      <div class="post-content" id="postContent"></div>
+      <div class="media-container" id="mediaContainer"></div>
+      <div class="post-actions">
+        <button id="likeButton" onclick="toggleLike()">
+          <span id="likeIcon">♡</span> 
+          <span id="likeCount">0</span>
+        </button>
+      </div>
+      <div class="comment-section">
+        <h3>댓글</h3>
+        <div class="comment-form">
+          <textarea id="commentContent" placeholder="댓글을 입력하세요"></textarea>
+          <button onclick="submitComment()">댓글 작성</button>
+        </div>
+        <div id="commentsList"></div>
+      </div>
+    </div>
+    <script>
+      const AWS_BUCKET_URL = "https://newpid.s3.ap-northeast-2.amazonaws.com";
+      let isLiked = false;
+      let currentUserId = null;
+
+      window.onload = async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const postsid = urlParams.get("id");
+        if (!postsid) {
+          alert("잘못된 접근입니다.");
+          location.href = "index.html";
+          return;
+        }
+
+        try {
+          // 게시글 정보 로드
+          const response = await fetch(`http://localhost:3030/api/posts/detail/${postsid}`);
+          const data = await response.json();
+          
+          if (response.ok) {
+            const post = data.data;
+            document.getElementById("postType").textContent = post.type;
+            document.getElementById("postTitle").textContent = post.title;
+            document.getElementById("postInfo").textContent = `작성일: ${new Date(post.createdAt).toLocaleString()}`;
+            document.getElementById("postContent").textContent = post.content;
+
+            // 미디어 파일 표시
+            const mediaContainer = document.getElementById("mediaContainer");
+            if (post.fileUrls) {
+              const urls = JSON.parse(post.fileUrls);
+              mediaContainer.innerHTML = urls.map(url => {
+                const fileExtension = url.split('.').pop().toLowerCase();
+                const isVideo = ['mp4', 'webm', 'ogg'].includes(fileExtension);
+                
+                if (isVideo) {
+                  return `
+                    <video class="media-item" controls>
+                      <source src="${url}" type="video/${fileExtension}">
+                    </video>
+                  `;
+                } else {
+                  return `
+                    <img class="media-item" 
+                      src="${url}" 
+                      onclick="openMediaModal('${url}')" 
+                      alt="게시글 이미지">
+                  `;
+                }
+              }).join('');
+            }
+
+            // 댓글 목록 로드 (사용자 정보 포함)
+            const commentsResponse = await fetch(`http://localhost:3030/api/posts/${postsid}/comments`);
+            const commentsData = await commentsResponse.json();
+            
+            const commentsList = document.getElementById('commentsList');
+            commentsList.innerHTML = ''; // 기존 댓글 초기화
+
+            // 현재 로그인한 사용자 정보 가져오기
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                try {
+                    const userResponse = await fetch('http://localhost:3030/api/users/me', {
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        currentUserId = userData.userId;
+                    } else {
+                        console.log('사용자 정보 조회 실패');
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            }
+
+            if (commentsData.data && commentsData.data.length > 0) {
+              commentsData.data.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment-item';
+                commentElement.innerHTML = `
+                  <div class="comment-header">
+                    <span class="comment-author">${comment.user?.nickname || '익명'}</span>
+                    <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                    ${comment.userId === currentUserId ? 
+                        `<button onclick="deleteComment(${comment.commentid})" class="delete-btn">삭제</button>` 
+                        : ''}
+                  </div>
+                  <div class="comment-content">${comment.content}</div>
+                `;
+                commentsList.appendChild(commentElement);
+              });
+            } else {
+              commentsList.innerHTML = '<p>아직 댓글이 없습니다.</p>';
+            }
+
+            // 좋아요 상태 확인
+            try {
+                const likeResponse = await fetch(`http://localhost:3030/api/posts/${postsid}/like`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const likeData = await likeResponse.json();
+                isLiked = likeData.isLiked;
+                updateLikeButton(likeData.likeCount);
+            } catch (error) {
+                console.error('Error checking like status:', error);
+            }
+
+          } else {
+            alert("게시글을 불러올 수 없습니다.");
+            location.href = "index.html";
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          alert("데이터를 불러오는 중 오류가 발생했습니다.");
+        }
+      };
+      // 이미지 모달 관련 함수
+      function openMediaModal(url) {
+        const modal = document.createElement("div");
+        modal.className = "media-modal";
+        modal.onclick = closeMediaModal;
+        modal.innerHTML = `
+                <div class="modal-content">
+                    <img src="${url}" style="max-width: 100%; max-height: 90vh;">
+                </div>
+            `;
+        document.body.appendChild(modal);
+        modal.style.display = "flex";
+        // ESC 키로 모달 닫기
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeMediaModal();
+        });
+      }
+      function closeMediaModal() {
+        const modal = document.querySelector(".media-modal");
+        if (modal) modal.remove();
+      }
+      async function submitComment() {
+        const content = document.getElementById('commentContent').value;
+        const postsid = new URLSearchParams(window.location.search).get('id');
+        
+        if (!content.trim()) {
+            alert('댓글 내용을 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3030/api/posts/${postsid}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                },
+                body: JSON.stringify({ content })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.message);
+                document.getElementById('commentContent').value = ''; // 입력창 초기화
+                location.reload(); // 페이지 새로고침
+            } else {
+                const data = await response.json();
+                alert(data.message || '댓글 작성에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('댓글 작성 중 오류가 발생했습니다.');
+        }
+      }
+      // 좋아요 토글 함수
+      async function toggleLike() {
+        const token = localStorage.getItem('userToken');
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        const postsid = new URLSearchParams(window.location.search).get('id');
+        try {
+            const response = await fetch(`http://localhost:3030/api/posts/${postsid}/like`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            isLiked = !isLiked;
+            updateLikeButton(data.likeCount);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('좋아요 처리 중 오류가 발생했습니다.');
+        }
+      }
+      // 좋아요 버튼 업데이트 함수
+      function updateLikeButton(count) {
+        const likeIcon = document.getElementById('likeIcon');
+        const likeCount = document.getElementById('likeCount');
+        likeIcon.textContent = isLiked ? '♥' : '♡';
+        likeCount.textContent = count;
+      }
+      // 댓글 삭제 함수
+      async function deleteComment(commentid) {
+        if (!confirm('댓글을 삭제하시겠습니까?')) return;
+
+        const token = localStorage.getItem('userToken');
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3030/api/comments/${commentid}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                alert('댓글이 삭제되었습니다.');
+                location.reload();
+            } else {
+                const data = await response.json();
+                alert(data.message || '댓글 삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('댓글 삭제 중 오류가 발생했습니다.');
+        }
+      }
+      // CSS 스타일 추가
+      const style = document.createElement('style');
+      style.textContent = `
+          .comment-item {
+              padding: 15px;
+              border-bottom: 1px solid #eee;
+              margin-bottom: 10px;
+          }
+          .comment-header {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+          }
+          .comment-author {
+              font-weight: bold;
+              color: #333;
+          }
+          .comment-date {
+              color: #666;
+              font-size: 0.9em;
+          }
+          .comment-content {
+              color: #444;
+              line-height: 1.4;
+          }
+      `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+/* 댓글 수정 관련 스타일 */
+.edit-textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.edit-button, .save-button, .cancel-button {
+    padding: 5px 10px;
+    margin-left: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: white;
+}
+
+.edit-button:hover {
+    background-color: #f0f0f0;
+}
+
+.save-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.cancel-button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+}
